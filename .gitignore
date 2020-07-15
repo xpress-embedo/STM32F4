@@ -1,0 +1,27 @@
+# IAR Output Files
+*.hex
+*.out
+*.sim
+*.map
+*.pbi
+*.pbd
+*.pbd.browse
+*.pbd.linf
+*.o
+*.xcl
+
+# IAR Files
+*.dep
+*.ewd
+*.cspy.bat
+*.cspy.ps1
+*.crun
+*.dbgdt
+*.dnx
+*.wsdt
+
+# Sublime Project and Sublime Workspace
+*.sublime-project
+*.sublime-workspace
+
+# Proteus Files
