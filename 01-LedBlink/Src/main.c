@@ -37,13 +37,17 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define LED_1_TASK_TIME       2000u   /* In milliseconds */
+#define LED_2_TASK_TIME       1000u   /* In milliseconds */
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t led_1_state = FALSE;
+uint8_t led_2_state = FALSE;
+uint32_t led_1_timestamp = 0u;
+uint32_t led_2_timestamp = 0u;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -98,9 +102,44 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     /* Method-1: Simple Way of Blinking */
-    HAL_GPIO_TogglePin( LED_RED_GPIO_Port, LED_RED_Pin);
-    HAL_GPIO_TogglePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin);
-    HAL_Delay(500);
+//    HAL_GPIO_TogglePin( LED_RED_GPIO_Port, LED_RED_Pin);
+//    HAL_GPIO_TogglePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+//    HAL_Delay(500);
+    /* Method-2: With the help of SysTick timers*/
+    /* Task for Led 1 */
+    if( HAL_GetTick() - led_1_timestamp > LED_1_TASK_TIME )
+    {
+      led_1_timestamp = HAL_GetTick();
+      if( led_1_state )
+      {
+        led_1_state = FALSE;
+        /* Setting Pin High will turn off the Led */
+        HAL_GPIO_WritePin( LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET );
+      }
+      else
+      {
+        led_1_state = TRUE;
+        /* Setting Pin Low will turn on the Led */
+        HAL_GPIO_WritePin( LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET );
+      }
+    }
+    /* Task for Led 2 */
+    if( HAL_GetTick() - led_2_timestamp > LED_2_TASK_TIME )
+    {
+      led_2_timestamp = HAL_GetTick();
+      if( led_2_state )
+      {
+        led_2_state = FALSE;
+        /* Setting Pin High will turn off the Led */
+        HAL_GPIO_WritePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET );
+      }
+      else
+      {
+        led_2_state = TRUE;
+        /* Setting Pin Low will turn on the Led */
+        HAL_GPIO_WritePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET );
+      }
+    }
   }
   /* USER CODE END 3 */
 }
