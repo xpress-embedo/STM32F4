@@ -19,9 +19,19 @@
 *.dbgdt
 *.dnx
 *.wsdt
+*.elf
+*.out
+*.ninja_deps
+*.ninja_log
+*.pbw
+*.ninja
 
 # Sublime Project and Sublime Workspace
 *.sublime-project
 *.sublime-workspace
 
 # Proteus Files
+*.pdsbak
+*.workspace
+
+/STemWin_HelloWorld/
