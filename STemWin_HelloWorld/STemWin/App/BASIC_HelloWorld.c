@@ -1,6 +1,10 @@
 #include "GUI.h"
 #include "stdlib.h"
 
+/*-----------------------------Global Variables-------------------------------*/
+extern GUI_CONST_STORAGE GUI_BITMAP bmFirstImage;
+extern GUI_CONST_STORAGE GUI_BITMAP bmSecondImage;
+
 /*-----------------------------Private Functions------------------------------*/
 static void custom_delay( void );
 static void test_print_text( void );
@@ -10,8 +14,8 @@ static void test_draw_circle( void );
 static void test_draw_ellipses( void );
 static void test_draw_polygon( void );
 static void test_draw_pie_chart( void );
-static void test_draw_graph( void );    // TODO:
-static void test_draw_bitmap( void );   // TODO:
+static void test_draw_graph( void );
+static void test_draw_bitmap( void );
 
 void MainTask(void) 
 {
@@ -23,6 +27,7 @@ void MainTask(void)
   test_draw_polygon();
   test_draw_pie_chart();
   test_draw_graph();
+  test_draw_bitmap();
   while(1);
 }
 
@@ -221,7 +226,7 @@ static void test_draw_pie_chart( void )
  ******************************************************************************/
 static void test_draw_graph( void )
 {
-  int x[240] = { 0 };   // Size of X-Axis
+  signed short x[240] = { 0 };   // Size of X-Axis
   int i = 0;
   GUI_Clear();
   GUI_SetColor(GUI_RED);
@@ -229,7 +234,17 @@ static void test_draw_graph( void )
   {
     x[i] = rand() % LCD_GetYSize()/2;
   }
-  // GUI_DrawGraph(x, GUI_COUNTOF(x), 0, 0 );
+  GUI_DrawGraph(x, LCD_GetXSize(), 0, 0 );
+  custom_delay();
+}
+
+static void test_draw_bitmap( void )
+{
+  GUI_Clear();
+  GUI_DrawBitmap(&bmFirstImage, 0, 0);
+  custom_delay();
+  GUI_Clear();
+  GUI_DrawBitmap(&bmSecondImage, 0, 0);
   custom_delay();
 }
 

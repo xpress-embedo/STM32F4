@@ -11,4 +11,4 @@ In simulation we have created two LEDs and 1 button which can be used for waking
 | D2 | GREEN | USER2 | PA5 Pin of micro |
 
 ### Led Blink Example
-![alt text](01-LedBlink/doc/LedBlink.gif "Led Blinking at Different Rate")
+![alt text](doc/LedBlink.gif "Led Blinking at Different Rate")

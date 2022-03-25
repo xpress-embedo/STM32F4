@@ -2,11 +2,11 @@
 <project>
     <fileVersion>3</fileVersion>
     <configuration>
-        <name>STM32F429I_DISCO_MB1075</name>
+        <name>Release</name>
         <toolchain>
             <name>ARM</name>
         </toolchain>
-        <debug>1</debug>
+        <debug>0</debug>
         <settings>
             <name>C-STAT</name>
             <archiveVersion>262</archiveVersion>
@@ -1114,7 +1114,7 @@
             <data>
                 <version>2</version>
                 <wantNonLocal>1</wantNonLocal>
-                <debug>1</debug>
+                <debug>0</debug>
                 <option>
                     <name>GenRtcDebugHeap</name>
                     <state>0</state>
@@ -1196,6 +1196,15 @@
         </group>
         <group>
             <name>User</name>
+            <group>
+                <name>images</name>
+                <file>
+                    <name>$PROJ_DIR$\..\STemWin\App\Images\FirstImage.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\STemWin\App\Images\SecondImage.c</name>
+                </file>
+            </group>
             <file>
                 <name>$PROJ_DIR$\..\STemWin\App\BASIC_HelloWorld.c</name>
             </file>
