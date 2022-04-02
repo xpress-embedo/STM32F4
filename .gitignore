@@ -26,6 +26,15 @@
 *.pbw
 *.ninja
 
+# STM32CubeIDE or Eclipse Files
+*.metadata
+Debug
+.settings
+*.bin
+*.list
+*.d
+*.su
+
 # Sublime Project and Sublime Workspace
 *.sublime-project
 *.sublime-workspace
