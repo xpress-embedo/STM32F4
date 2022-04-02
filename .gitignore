@@ -28,6 +28,7 @@
 
 # STM32CubeIDE or Eclipse Files
 *.metadata
+*.launch
 Debug
 .settings
 *.bin
@@ -42,3 +43,6 @@ Debug
 # Proteus Files
 *.pdsbak
 *.workspace
+
+# Other Folders
+/resources/

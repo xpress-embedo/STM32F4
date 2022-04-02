@@ -30,6 +30,34 @@
 #include <sys/time.h>
 #include <sys/times.h>
 
+/*
+ * Implementation of printf feature using ARM Cortex M3/M4 ITM functionality
+ * This function will not work for ARM Cortex M0/M0+
+ * If we are using Cortex M0, then we can use semi-hosting feature of OpenOCD
+ */
+
+// Debug Exception and Monitor Control Register Base Address
+// Address of this register can be found in Cortex-M4 Reference Manual from ARM
+#define DEMCR                 *((volatile uint32_t*) 0xE000EDFC )
+
+// ITM register addresse
+#define ITM_STIMULUS_PORT0    *((volatile uint32_t*) 0xE0000000 )
+#define ITM_TRACE_EN          *((volatile uint32_t*) 0xE0000E00 )
+
+void ITM_SendChar(uint8_t ch)
+{
+  // Enable TRCENA, this bit must be enabled before programminmg the ITM Unit
+  DEMCR |= ( 1 << 24u);
+
+  // enable stimulus port 0
+  ITM_TRACE_EN |= ( 1 << 0);
+
+  // read FIFO status in bit [0]:
+  while(!(ITM_STIMULUS_PORT0 & 1));
+
+  // Write to ITM stimulus port0
+  ITM_STIMULUS_PORT0 = ch;
+}
 
 /* Variables */
 extern int __io_putchar(int ch) __attribute__((weak));
@@ -80,7 +108,11 @@ __attribute__((weak)) int _write(int file, char *ptr, int len)
 
 	for (DataIdx = 0; DataIdx < len; DataIdx++)
 	{
-		__io_putchar(*ptr++);
+		// __io_putchar(*ptr++);
+	  // Here we are redirecting our data from printf to ITM
+	  ITM_SendChar(*ptr++);
+	  // Similarly if we want we can redirect our data to an UART or a LCD
+	  // Using the relevant functions
 	}
 	return len;
 }
