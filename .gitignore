@@ -26,6 +26,16 @@
 *.pbw
 *.ninja
 
+# STM32CubeIDE or Eclipse Files
+*.metadata
+*.launch
+Debug
+.settings
+*.bin
+*.list
+*.d
+*.su
+
 # Sublime Project and Sublime Workspace
 *.sublime-project
 *.sublime-workspace
@@ -33,3 +43,6 @@
 # Proteus Files
 *.pdsbak
 *.workspace
+
+# Other Folders
+/resources/
