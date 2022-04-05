@@ -23,7 +23,14 @@
 #endif
 
 /*
- * In this example we will do this
+ * In this example we will do the HSI (High Speed Internal Oscillator) Clock
+ * Measurement, these clocks whether HSI or HSE can be connected to MCO1, which
+ * is micro-controller output-1,and then we can use GPIO's alternate function
+ * to connect this MCO1 output to PA8 pin of GPIOA.
+ * It should also output 16MHz (16MHz is internal RC on this discovery board)
+ * so it should output the same frequency, but since the Logic Analyzer which I
+ * am using is pretty slow, I will pre-scale the output by 4, and will only get
+ * 4MHz on the PA8 pin of GPIOA
  */
 
 #define RCC_BASE_ADDR       			(0x40023800ul)    // Reset & Control Register Base Address
