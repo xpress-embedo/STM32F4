@@ -1,0 +1,3 @@
+[submodule "Without_Cube/STM32F429I_Drivers/Drivers"]
+	path = Without_Cube/STM32F429I_Drivers/Drivers
+	url = git@github.com:xpress-embedo/STM32F4_Custom_Drivers.git
