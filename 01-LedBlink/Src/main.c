@@ -17,7 +17,6 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
-
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
@@ -39,6 +38,7 @@
 /* USER CODE BEGIN PM */
 #define LED_1_TASK_TIME       2000u   /* In milliseconds */
 #define LED_2_TASK_TIME       1000u   /* In milliseconds */
+#define USER_BTN_TASK_TIME    10u     /* In milliseconds */
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -48,6 +48,7 @@ uint8_t led_1_state = FALSE;
 uint8_t led_2_state = FALSE;
 uint32_t led_1_timestamp = 0u;
 uint32_t led_2_timestamp = 0u;
+uint32_t user_btn_timestamp = 0u;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -140,6 +141,23 @@ int main(void)
         HAL_GPIO_WritePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET );
       }
     }
+    
+    /* Task for User Button Input Detection */
+    if( HAL_GetTick() - user_btn_timestamp > USER_BTN_TASK_TIME )
+    {
+      user_btn_timestamp = HAL_GetTick();
+      /* Button will give Logic-0 when pressed */
+      if( HAL_GPIO_ReadPin( USER_BUTTON_GPIO_Port, USER_BUTTON_Pin) == GPIO_PIN_RESET )
+      {
+        /* When button is pressed turn on the Led-3 */
+        HAL_GPIO_WritePin( USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_SET);
+      }
+      else
+      {
+        /* if button is not pressed turn of the Led-3 */
+        HAL_GPIO_WritePin( USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_RESET);
+      }
+    }
   }
   /* USER CODE END 3 */
 }
@@ -153,11 +171,13 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage 
+  /** Configure the main internal regulator output voltage
   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
-  /** Initializes the CPU, AHB and APB busses clocks 
+
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -167,7 +187,8 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB busses clocks 
+
+  /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
@@ -192,14 +213,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LED_GREEN_Pin|LED_RED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LED_GREEN_Pin|LED_RED_Pin|USER_LED_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : LED_GREEN_Pin LED_RED_Pin */
-  GPIO_InitStruct.Pin = LED_GREEN_Pin|LED_RED_Pin;
+  /*Configure GPIO pin : USER_BUTTON_Pin */
+  GPIO_InitStruct.Pin = USER_BUTTON_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(USER_BUTTON_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : LED_GREEN_Pin LED_RED_Pin USER_LED_Pin */
+  GPIO_InitStruct.Pin = LED_GREEN_Pin|LED_RED_Pin|USER_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -232,12 +260,10 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
-{ 
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
