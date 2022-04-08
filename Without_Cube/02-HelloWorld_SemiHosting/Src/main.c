@@ -33,10 +33,14 @@ int main(void)
   // So in case we wanted to use the printf functionality for debugging on
   // Cortex M0/M0+ we can use OpenOCD based Semi-Hosting
   // Here we have to update the linker arguments with the following flags
-  // "-specs=rdimon.specs -lc -lrdimon
+  // "-specs=rdimon.specs -lc -lrdimon"
   // Instead of using St-Link Debugger, we have to use St-Link (OpenOCD)
   // and then we need to call the function "initialise_monitor_handles()" at
   // start-up and simply use printf function with \n character at last
+  // Apart from this while debugging the project we have to use ST-Link Open OCD
+  // as debugger, and in the startup section of the debugger we have to mention
+  // "monitor arm semihosting enable"
+  // else semihosting will not work, don't forget to exclude syscalls.c from build
 
   initialise_monitor_handles();
 
