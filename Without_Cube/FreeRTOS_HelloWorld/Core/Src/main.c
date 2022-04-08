@@ -21,7 +21,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "FreeRTOS.h"
+#include "task.h"
+#include "stdio.h"    // Added for printf
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,7 +50,9 @@
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
-
+extern void initialise_monitor_handles( void );
+static void Task1_Handler( void* parameter);
+static void Task2_Handler( void* parameter);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -63,7 +67,8 @@ static void MX_GPIO_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  TaskHandle_t task1_handle, task2_handle;
+  BaseType_t status;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -85,6 +90,24 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
+
+  initialise_monitor_handles();
+
+  printf("Using OpenOCD Based Semi-Hosting Method to debug this FreeRTOS Project\n");
+  printf("NOTE: With STM32F429I-DISCO board ITM based printf debugging can be used\n");
+  printf("But SB9 bridge on the boards needs to be soldered.\n");
+
+  /* Create Task-1*/
+  status = xTaskCreate(Task1_Handler, "Task-1", 200, "Hello World from Task-1", 2, &task1_handle);
+  configASSERT(status == pdPASS);
+  /* Create Task-2*/
+  status = xTaskCreate(Task2_Handler, "Task-2", 200, "Hello World from Task-2", 2, &task2_handle);
+  configASSERT(status == pdPASS);
+
+  /* Start the Scheduler */
+  vTaskStartScheduler();
+  /* control shouldn't come here, if it is coming then there is some problem */
+  /* this failure can happen due to insufficient memory in heap */
 
   /* USER CODE END 2 */
 
@@ -403,7 +426,25 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+static void Task1_Handler( void* parameter)
+{
+  while( 1 )
+  {
+    printf("%s\n", (char*)parameter);
+    /* this will force the context switch or willingly giving up the processor */
+    taskYIELD();
+  }
+}
 
+static void Task2_Handler( void* parameter)
+{
+  while( 1 )
+  {
+    printf("%s\n", (char*)parameter);
+    /* this will force the context switch or willingly giving up the processor */
+    taskYIELD();
+  }
+}
 /* USER CODE END 4 */
 
 /**
