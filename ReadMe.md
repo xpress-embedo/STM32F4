@@ -37,11 +37,22 @@ In this example we will do the HSE (High Speed External Clock) Clock Measurement
 It should also output 8MHz (8MHz is external crystal oscillator connected on the discovery board) so it should output the same frequency, but since the Logic Analyzer which I  am using is pretty slow, I will pre-scale the output by 4, and will only get 2MHz on the PA8 pin of GPIOA.  
 ![alt text](Without_Cube/04-HSE_Measurement/HSE_Measurement.png "HSE Measurement")  
 
+
+## FreeRTOS
+All the FreeRTOS based projects are started with the name FreeRTOS appened at the starting of the folder.  
+I have prepared some notes on FreeRTOS which can be accessed by [clicking here](FreeRTOS_ReadMe.md).  
+
 ### FreeRTOS_HelloWorld
 **Project Path** - `Without_Cube/FreeRTOS_HelloWorld`  
 **Development Environment** - STM32CubeIDE  
 This is a simple Hello World project using FreeRTOS, where it is added manually, apart from this SEGGER's SystemView is also integrated to record the events taking place and display it on SEGGER SystemView Host Application.  
 
-## FreeRTOS
-All the FreeRTOS based projects are started with the name FreeRTOS appened at the starting of the folder.  
-I have prepared some notes on FreeRTOS which can be accessed by [clicking here](FreeRTOS_ReadMe.md).  
+### FreeRTOS_LedTasks
+**Project Path** - `Without_Cube/FreeRTOS_LedTasks`  
+**Development Environment** - STM32CubeIDE  
+This is a simple FreeRTOS project, where we have taken the `FreeRTOS_HelloWorld` project as base project, in this project the idea is to toggle the user Leds i.e. LD3 (Green LED) and LD4 (Red LED), in two separate tasks created in FreeRTOS.  
+![alt text](Documentation/FreeRTOS_LedTasks_with_HAL_Delay.png "LED Tasks Running with HAL Delay")  
+
+The above image is from the recorder catured using the SEGGER SystemView, here it can be seen that the CPU time is wasted un-necessarily in processing the delays i.e. `HAL_Delay`.  
+These types of tasks are known as Continous Tasks, while these can be converted into Periodic Tasks, where CPU will peform the actions and move to Idle Task, saving CPU bandwidth which can be used for several other purposes like putting the CPU into low power mode.  
+
