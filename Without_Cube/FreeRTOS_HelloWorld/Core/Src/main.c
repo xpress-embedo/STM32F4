@@ -23,7 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "FreeRTOS.h"
 #include "task.h"
-#include "stdio.h"    // Added for printf
+#include <stdio.h>
 #include "SEGGER_SYSVIEW.h"
 /* USER CODE END Includes */
 
@@ -52,7 +52,6 @@
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
-extern void initialise_monitor_handles( void );
 static void Task1_Handler( void* parameter);
 static void Task2_Handler( void* parameter);
 /* USER CODE END PFP */
@@ -92,12 +91,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-
-  initialise_monitor_handles();
-
-  printf("Using OpenOCD Based Semi-Hosting Method to debug this FreeRTOS Project\n");
-  printf("NOTE: With STM32F429I-DISCO board ITM based printf debugging can be used\n");
-  printf("But SB9 bridge on the boards needs to be soldered.\n");
 
   /* Enable the Cycle Counter i.e. CYCCNT */
   DWT_CTRL |= (0x01 << 0);
@@ -437,9 +430,14 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 static void Task1_Handler( void* parameter)
 {
+  char msg[100];
   while( 1 )
   {
-    printf("%s\n", (char*)parameter);
+    /* printf("%s\n", (char*)parameter);
+    Instead of using printf, we will use SEGGER_SYSVIEW_PrintfTarget and this
+    will help in showing these messages in task on SystemView PC Host App.*/
+    snprintf(msg, 100, "%s\n", (char*)parameter);
+    SEGGER_SYSVIEW_PrintfTarget(msg);
     /* this will force the context switch or willingly giving up the processor */
     taskYIELD();
   }
@@ -447,9 +445,14 @@ static void Task1_Handler( void* parameter)
 
 static void Task2_Handler( void* parameter)
 {
+  char msg[100];
   while( 1 )
   {
-    printf("%s\n", (char*)parameter);
+    /* printf("%s\n", (char*)parameter);
+    Instead of using printf, we will use SEGGER_SYSVIEW_PrintfTarget and this
+    will help in showing these messages in task on SystemView PC Host App.*/
+    snprintf(msg, 100, "%s\n", (char*)parameter);
+    SEGGER_SYSVIEW_PrintfTarget(msg);
     /* this will force the context switch or willingly giving up the processor */
     taskYIELD();
   }
