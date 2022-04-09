@@ -39,4 +39,4 @@ It should also output 8MHz (8MHz is external crystal oscillator connected on the
 
 ## FreeRTOS
 All the FreeRTOS based projects are started with the name FreeRTOS appened at the starting of the folder.  
-I have prepared some notes on FreeRTOS which can be accessed by [clicking here](#FreeRTOS_ReadMe.md).  
+I have prepared some notes on FreeRTOS which can be accessed by [clicking here](FreeRTOS_ReadMe).  
