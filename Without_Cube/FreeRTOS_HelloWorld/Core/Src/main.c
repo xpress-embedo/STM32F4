@@ -24,6 +24,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "stdio.h"    // Added for printf
+#include "SEGGER_SYSVIEW.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,6 +34,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define DWT_CTRL            (*(volatile uint32_t*)0xE0001000u)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -96,6 +98,13 @@ int main(void)
   printf("Using OpenOCD Based Semi-Hosting Method to debug this FreeRTOS Project\n");
   printf("NOTE: With STM32F429I-DISCO board ITM based printf debugging can be used\n");
   printf("But SB9 bridge on the boards needs to be soldered.\n");
+
+  /* Enable the Cycle Counter i.e. CYCCNT */
+  DWT_CTRL |= (0x01 << 0);
+
+  /* SystemView should be configured and start before using any FreeRTOS API's */
+  SEGGER_SYSVIEW_Conf();
+  SEGGER_SYSVIEW_Start();
 
   /* Create Task-1*/
   status = xTaskCreate(Task1_Handler, "Task-1", 200, "Hello World from Task-1", 2, &task1_handle);
@@ -432,7 +441,7 @@ static void Task1_Handler( void* parameter)
   {
     printf("%s\n", (char*)parameter);
     /* this will force the context switch or willingly giving up the processor */
-    taskYIELD();
+    // taskYIELD();
   }
 }
 

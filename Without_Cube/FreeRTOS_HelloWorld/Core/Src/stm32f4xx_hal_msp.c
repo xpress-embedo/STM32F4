@@ -21,7 +21,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 /* USER CODE BEGIN Includes */
-
+#include "FreeRTOS.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,7 +72,11 @@ void HAL_MspInit(void)
   /* System interrupt init*/
 
   /* USER CODE BEGIN MspInit 1 */
-
+  /* This will initialize a variable which is related to priority grouping this
+  is basically done automatically by scheduler, but since we have integrated
+  SystemView, we need to use config and start API's before reaching the scheduler
+  hence this is must here. More explanation TODO: XS */
+  vInitPrioGroupValue();
   /* USER CODE END MspInit 1 */
 }
 

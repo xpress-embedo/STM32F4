@@ -73,11 +73,10 @@ Additional information:
 *
 **********************************************************************
 */
-
-/*********************************************************************
-* TODO: Add your defines here.                                       *
-**********************************************************************
-*/
+/* Instead of changing the config defaults files it's better to write here */
+/* Note: SEGGER_SYSVIEW_CORE_CM3 is for Cortex-M3/M4/M7 don't get confuse */
+#define SEGGER_SYSVIEW_CORE               SEGGER_SYSVIEW_CORE_CM3
+#define SEGGER_SYSVIEW_RTT_BUFFER_SIZE    (1024*4)
 
 
 #endif  // SEGGER_SYSVIEW_CONF_H
