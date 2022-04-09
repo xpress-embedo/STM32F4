@@ -36,9 +36,10 @@ Architecture Specific codes are responsible to achieve the scheduling of the tas
   * If ARM Cortex Mx Processors are used, then we should be able to locate the below three interrupt handlers in `port.c` which are the part of the scheduler implementation of the FreeRTOS.  
     * `vPortSVCHandler()` : Used to launch the very first task, and is triggered by SVC instruction of ARM.  [Check `vTaskStartScheduler` API](#vtaskstartscheduler)  
     * `xPortPendSVHandler()` : Used to achieve the context switching between tasks, and is triggered by pending the PendSV System Exception of the ARM.  
-      ![alt text](documentation/PendSV_Handler.png "PendSV Handler on Timeline of SystemView Application")  
+      Also check [Context Switching](#context-switching)
+      ![alt text](Documentation/PendSV_Handler.png "PendSV Handler on Timeline of SystemView Application")  
     * `xPortSysTickHandler()` : This implements the RTOS Tick management, and is triggered periodically by SysTick Timer of ARM Cortex Mx Processor.  
-      ![alt text](documentation/SysTick_Handler.png "SysTick Handler on Timeline of SystemView Application")  
+      ![alt text](Documentation/SysTick_Handler.png "SysTick Handler on Timeline of SystemView Application")  
 
 
 
@@ -57,6 +58,15 @@ Architecture Specific codes are responsible to achieve the scheduling of the tas
   * If we don't use the software timer in our FreeRTOS application then we have disable this using `configUSER_TIMERS = 0` in the `FreeRTOSConfig.h` file.  
   * All Software timer callback functions execute in the context of the timer daemon task.  
 
+## Context Switching
+  * Context Switching is a process of switching out of one task and switching in of another task on the CPU to execute.  
+  * In RTOS, Context Switching is taken care by the scheduler.  
+  * In FreeRTOS Context Switching is taken care by the `PendSV_Handler` found in the `port.c` file.  
+  * Whether Context Switch should happen or not depends upon the scheduling policy of the scheduler.  
+  * If the scheduler is priority based preemptive scheduler, then for every RTOS tick interrupt, the scheduler will compare the priority of the running task with the priority of ready tasks list. **If there is any ready task with higher priority than the running task the context switch will occur**.  
+  * On FreeRTOS we can also trigger the context switch manually using the `taskYIELD` macro.  
+  * Context Switch also happen immediately whenever new task unblocks and if its priority is higher than the currently running task.  
+  
 
 ## FreeRTOS API's
 ### Task Creation API
@@ -75,3 +85,7 @@ BaseType_t xTaskCreate( TaskFunction_t pvTaskCode,          /* Address of the as
 * After calling this function only the scheduler code is initialized and all the architecture specific interrupts will be activated.  
 * This function also creates the `Idle Task` and the `Timer Daemon Task`.  
 * This function calls `xPortStartScheduler()` to do the architecture specific initialization.  
+  And this architecture specifics functions, perform the three major tasks which are as below.  
+  * Configure the `SysTick` timer to issue the interrupts at the desired rate (as configured in the config item `configTICK_RATE_HZ` in FreeRTOSConfig.h file).  
+  * Configures the priority for the PendSV and SysTick interrupts.  
+  * Starts the first task by executing the SVC instruction.  
