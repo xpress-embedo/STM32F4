@@ -441,7 +441,7 @@ static void Task1_Handler( void* parameter)
   {
     printf("%s\n", (char*)parameter);
     /* this will force the context switch or willingly giving up the processor */
-    // taskYIELD();
+    taskYIELD();
   }
 }
 
