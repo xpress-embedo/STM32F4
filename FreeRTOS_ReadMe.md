@@ -89,3 +89,15 @@ BaseType_t xTaskCreate( TaskFunction_t pvTaskCode,          /* Address of the as
   * Configure the `SysTick` timer to issue the interrupts at the desired rate (as configured in the config item `configTICK_RATE_HZ` in FreeRTOSConfig.h file).  
   * Configures the priority for the PendSV and SysTick interrupts.  
   * Starts the first task by executing the SVC instruction.  
+
+
+### vTaskDelay() and vTaskDelayUntil()
+These API's are used to delay a task without engaging the processor (replacement for for/while loop based crude delay implementation), and these are are used for the implementation of the periodic tasks.  
+`vTaskDelay` API, is a blocking delay API that blocks the task for the specified RTOS ticks. For the next specified RTOS ticks other lower priority tasks of the system can run. And after this specified RTOS ticks are expired the task wakes up and enters the READY state.  
+`vTaskDelayUntil` API is used to delay a task until specified time. This function can be used by periodic tasks to ensure a constant execution frequency.  
+```
+void vTaskDelayUntil( TickType_t *pxPreviousWakeTime,       /* Pointer to a variable that holds the time at which task was unblocked last time */
+                      const TickType_t xTimeIncrement );    /* The cycle time period */
+```
+This function differs from `vTaskDelay()` in one important aspect: `vTaskDelay()` specifies a time at which the task wishes to unblock relative to the time at which `vTaskDelay()` is called, whereas `vTaskDelayUntil()` specifies an absolute time at which the task wishes to unblock.  
+

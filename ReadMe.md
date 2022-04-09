@@ -51,8 +51,10 @@ This is a simple Hello World project using FreeRTOS, where it is added manually,
 **Project Path** - `Without_Cube/FreeRTOS_LedTasks`  
 **Development Environment** - STM32CubeIDE  
 This is a simple FreeRTOS project, where we have taken the `FreeRTOS_HelloWorld` project as base project, in this project the idea is to toggle the user Leds i.e. LD3 (Green LED) and LD4 (Red LED), in two separate tasks created in FreeRTOS.  
-![alt text](Documentation/FreeRTOS_LedTasks_with_HAL_Delay.png "LED Tasks Running with HAL Delay")  
+![alt text](Documentation/FreeRTOS_LedTasks_with_HAL_Delay.PNG "LED Tasks Running with HAL Delay")  
 
 The above image is from the recorder catured using the SEGGER SystemView, here it can be seen that the CPU time is wasted un-necessarily in processing the delays i.e. `HAL_Delay`.  
 These types of tasks are known as Continous Tasks, while these can be converted into Periodic Tasks, where CPU will peform the actions and move to Idle Task, saving CPU bandwidth which can be used for several other purposes like putting the CPU into low power mode.  
-
+And this can be used with the usage of `vTaskDelayUntil` function, and once this is done and after recording the events we see the following.  
+![alt text](Documentation/FreeRTOS_LedTasks_with_vTaskDelayUntil.PNG "LED Tasks Running with HAL Delay")  
+As highlighted with the blue color, **the CPU is now in Idle state for 86.68%**, and as seen with green highlighted arrow, the Led Green tasks unblocks and runs and the again moved to block state, and same thing happened with the Led Red tasks, hence preventing the CPU bandwidth usage.  

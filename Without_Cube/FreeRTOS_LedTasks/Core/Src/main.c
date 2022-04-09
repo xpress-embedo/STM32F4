@@ -425,22 +425,28 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 static void GreenLED_TaskHandler( void* parameter)
 {
+  TickType_t last_wake_time;
+  /* Initialize the variable with the current time */
+  last_wake_time = xTaskGetTickCount();
   while( 1 )
   {
     SEGGER_SYSVIEW_PrintfTarget("Green LED Task\n");
     /* Toggle On Board Green Led */
     HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-    HAL_Delay(500);
+    vTaskDelayUntil( &last_wake_time, pdMS_TO_TICKS(1000) );
   }
 }
 static void RedLED_TaskHandler( void* parameter )
 {
+  TickType_t last_wake_time;
+  /* Initialize the variable with the current time */
+  last_wake_time = xTaskGetTickCount();
   while ( 1 )
   {
     SEGGER_SYSVIEW_PrintfTarget("Red LED Task\n");
     /* Toggle On Board RED Led */
     HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
-    HAL_Delay(500);
+    vTaskDelayUntil( &last_wake_time, pdMS_TO_TICKS(500) );
   }
 }
 /* USER CODE END 4 */
