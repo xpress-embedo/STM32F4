@@ -37,6 +37,11 @@ In this example we will do the HSE (High Speed External Clock) Clock Measurement
 It should also output 8MHz (8MHz is external crystal oscillator connected on the discovery board) so it should output the same frequency, but since the Logic Analyzer which I  am using is pretty slow, I will pre-scale the output by 4, and will only get 2MHz on the PA8 pin of GPIOA.  
 ![alt text](Without_Cube/04-HSE_Measurement/HSE_Measurement.png "HSE Measurement")  
 
+### FreeRTOS_HelloWorld
+**Project Path** - `Without_Cube/FreeRTOS_HelloWorld`  
+**Development Environment** - STM32CubeIDE  
+This is a simple Hello World project using FreeRTOS, where it is added manually, apart from this SEGGER's SystemView is also integrated to record the events taking place and display it on SEGGER SystemView Host Application.  
+
 ## FreeRTOS
 All the FreeRTOS based projects are started with the name FreeRTOS appened at the starting of the folder.  
-I have prepared some notes on FreeRTOS which can be accessed by [clicking here](FreeRTOS_ReadMe).  
+I have prepared some notes on FreeRTOS which can be accessed by [clicking here](FreeRTOS_ReadMe.md).  
