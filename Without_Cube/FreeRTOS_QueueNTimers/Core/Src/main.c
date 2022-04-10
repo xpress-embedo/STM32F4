@@ -31,6 +31,23 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
+/* Application States */
+typedef enum _Application_States_e
+{
+  MAIN_MENU = 0,
+  LED_EFFECT,
+  RTC_MENU,
+  RTC_TIME_CONFIG,
+  RTC_DATE_CONFIG,
+  RTC_REPORT
+} Application_States_e;
+
+typedef struct _Command_s
+{
+  uint8_t payload[8];
+  uint8_t len;
+} Command_s;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -57,7 +74,8 @@ static void MX_GPIO_Init(void);
 static void MX_RTC_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void Command_Processor( Command_s *s_cmd );
+static int8_t Command_Extractor( Command_s *s_cmd );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -73,6 +91,8 @@ QueueHandle_t q_data;
 QueueHandle_t q_print;
 
 uint8_t uart_data;
+
+Application_States_e e_state = MAIN_MENU;
 /* USER CODE END 0 */
 
 /**
@@ -549,11 +569,23 @@ void Menu_TaskHandler( void * parameter)
 
   }
 }
+
 void Command_TaskHandler( void * parameter )
 {
+  BaseType_t status;
+  Command_s s_command;
   while(1)
   {
-
+    /* wait for notification for indefinite time*/
+    status = xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
+    if( status == pdTRUE )
+    {
+      /* this means that notification is reached, and hence called the process
+      command function, which extracts the sent command from user */
+      Command_Processor( &s_command );
+    }
+    /* process the user data stored in the queue */
+    /* notify the command to do the relevant task */
   }
 }
 
@@ -579,6 +611,54 @@ void RTC_TaskHandler( void * parameter)
   {
 
   }
+}
+
+static void Command_Processor( Command_s *s_cmd )
+{
+  Command_Extractor(s_cmd);
+
+  switch( e_state )
+  {
+    case MAIN_MENU:
+      /* Notify Menu Task with the Command */
+      break;
+    case LED_EFFECT:
+      /* Notify Led Effect Task with the Command */
+      break;
+    case RTC_MENU:
+    case RTC_TIME_CONFIG:
+    case RTC_DATE_CONFIG:
+    case RTC_REPORT:
+      /* Notify RTC Task with the Command */
+      break;
+  }
+}
+
+static int8_t Command_Extractor( Command_s *s_cmd )
+{
+  uint8_t item;
+  uint8_t i = 0u;
+  BaseType_t status;
+
+  status = uxQueueMessagesWaiting(q_data);
+  if( !status )
+  {
+    /* Queue is empty i.e. no data is present, hence exit from here */
+    return (-1);
+  }
+
+  do
+  {
+    status = xQueueReceive(q_data, &item, 0);
+    if( status == pdTRUE )
+    {
+      s_cmd->payload[i] = item;
+      i++;
+    }
+  } while ( item != '\n' );
+  s_cmd->payload[i-1] = '\0';
+  s_cmd->len = i-1;
+  return 0;
 }
 
 /* USER CODE END 4 */
