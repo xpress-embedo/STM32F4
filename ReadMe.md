@@ -71,3 +71,13 @@ This is a simple FreeRTOS project, where we have taken the `FreeRTOS_HelloWorld`
 
 As can be seen in the above image, that Red and Green Tasks were executing but when the button is pressed, the button task sends an notification to green led tasks, and as an action green led task has turned on the green led and deleted itself, the same is repeated for red led task also.  
 
+
+### FreeRTOS_ButtonISR
+**Project Path** - `Without_Cube/FreeRTOS_ButtonISR`  
+**Development Environment** - STM32CubeIDE  
+This is a simple FreeRTOS project, where we have taken the `FreeRTOS_HelloWorld` project as base project. In this project we have two tasks running, two tasks for led togglings at different rate, and one button is configured to generate interrupt on falling edge i.e. when pressed and released.  
+This button ISR will send a notifcation to the tasks to delete the tasks, here the important point is that we can't use `vTaskNotify` FreeRTOS API's, here we have to use the `vTaskNotifyFromISR` FreeRTOS API's, because we are sending notification from interrupt.  
+
+![alt text](Documentation/FreeRTOS_ButtonISR_TaskReady_But_Not_Executed.PNG "Notify Tasks from ISR")  
+
+As can be seen in the above image, when ISR22 occurs (which is for External Interrupt), our Green Led task becomes ready, but still the FreeRTOS was executing the Idle task, until the SysTick interrupts again, as can be see in the above there is a delay of around 800 useconds, and this is not good, ideally the task should execute right away because Idle Task in not a high priority task as compared to the Green Led task.  
