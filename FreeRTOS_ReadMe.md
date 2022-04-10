@@ -102,7 +102,38 @@ void vTaskDelayUntil( TickType_t *pxPreviousWakeTime,       /* Pointer to a vari
 This function differs from `vTaskDelay()` in one important aspect: `vTaskDelay()` specifies a time at which the task wishes to unblock relative to the time at which `vTaskDelay()` is called, whereas `vTaskDelayUntil()` specifies an absolute time at which the task wishes to unblock.  
 
 
-### vTaskSuspendAll and vTaskResumeAll
+### vTaskSuspendAll and xTaskResumeAll
 `vTaskSuspendAll` API suspends the scheduler. Suspending the scheduler prevents a context switching from occurring but leaves interrupts enabled. If an interrupt requests a context switch while the scheduler is suspended, then the request is held pending and is performed only when the scheduler is resumed.  
 `xTaskResueAll` API can be used to resume the scheduler state from the suspended state.  
 
+### xTaskNotify and xTaskNotifyWait
+```
+ BaseType_t xTaskNotify( TaskHandle_t xTaskToNotify,  /* Handle of the task being notified */
+                         uint32_t ulValue,            /* Index within the target task array notification values to which the notification is to be sent*/
+                         eNotifyAction eAction );     /* enum type that can take one of the values documented */   
+
+ BaseType_t xTaskNotifyIndexed( TaskHandle_t xTaskToNotify, 
+                                UBaseType_t uxIndexToNotify, 
+                                uint32_t ulValue, 
+                                eNotifyAction eAction );
+```
+Each task has an array of 'task notifications' (or just 'notifications'), each of which has a state and a 32-bit value. A direct to task notification is an event sent directly to a task that can unblock the receiving task, and optionally update one of the receiving tasks notification values in a number of different ways. For example, a notification may overwrite one of the receiving task's notification values, or just set one or more bits in one of the receiving task's notification values.  
+`xTaskNotify()` is used to send an event directly to and potentially unblock an RTOS task, and optionally update one of the receiving tasks notification values in one of the following ways:  
+* Write a 32-bit number to the notification value  
+* Add one (increment) the notification value  
+* Set one or more bits in the notification value  
+* Leave the notification value unchanged  
+`xTaskNotify()` and `xTaskNotifyIndexed()` are equivalent functions - the only difference being `xTaskNotifyIndexed()` can operate on any task notification within the array and xTaskNotify() always operates on the task notification at array index 0.  
+
+```
+BaseType_t xTaskNotifyWait( uint32_t ulBitsToClearOnEntry,
+                             uint32_t ulBitsToClearOnExit,
+                             uint32_t *pulNotificationValue,
+                             TickType_t xTicksToWait );
+
+ BaseType_t xTaskNotifyWaitIndexed( UBaseType_t uxIndexToWaitOn, 
+                                    uint32_t ulBitsToClearOnEntry, 
+                                    uint32_t ulBitsToClearOnExit, 
+                                    uint32_t *pulNotificationValue, 
+                                    TickType_t xTicksToWait );
+```

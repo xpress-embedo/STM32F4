@@ -447,7 +447,13 @@ static void GreenLED_TaskHandler( void* parameter)
     {
       /* this means that this task has received the notification and it's time
       to delete this task, but before deleting update the handle for next task*/
+      /*NOTE: new_task_handle is a global variable and updating it directly can
+      have some issues, as it is shared with other tasks also, so it's better to
+      protect this variable unintentionally, this can be done by suspending and
+      resuming the scheduler */
+      vTaskSuspendAll();
       next_task_handle = red_led_task_handle;
+      xTaskResumeAll();
       /* before deleting turn on the LED permanently */
       HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET );
       /* passing NULL means deleting self */
@@ -469,7 +475,13 @@ static void RedLED_TaskHandler( void* parameter )
     {
       /* this means that this task has received the notification and it's time
       to delete this task, & since no other next task it is set to NULL */
+      /*NOTE: new_task_handle is a global variable and updating it directly can
+      have some issues, as it is shared with other tasks also, so it's better to
+      protect this variable unintentionally, this can be done by suspending and
+      resuming the scheduler */
+      vTaskSuspendAll();
       next_task_handle = NULL;
+      xTaskResumeAll();
       /* before deleting turn on the LED permanently */
       HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET );
       /*delete button task first and then delete the current task */
