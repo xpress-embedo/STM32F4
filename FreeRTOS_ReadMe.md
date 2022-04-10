@@ -101,3 +101,8 @@ void vTaskDelayUntil( TickType_t *pxPreviousWakeTime,       /* Pointer to a vari
 ```
 This function differs from `vTaskDelay()` in one important aspect: `vTaskDelay()` specifies a time at which the task wishes to unblock relative to the time at which `vTaskDelay()` is called, whereas `vTaskDelayUntil()` specifies an absolute time at which the task wishes to unblock.  
 
+
+### vTaskSuspendAll and vTaskResumeAll
+`vTaskSuspendAll` API suspends the scheduler. Suspending the scheduler prevents a context switching from occurring but leaves interrupts enabled. If an interrupt requests a context switch while the scheduler is suspended, then the request is held pending and is performed only when the scheduler is resumed.  
+`xTaskResueAll` API can be used to resume the scheduler state from the suspended state.  
+

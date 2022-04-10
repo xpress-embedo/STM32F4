@@ -47,14 +47,27 @@ I have prepared some notes on FreeRTOS which can be accessed by [clicking here](
 **Development Environment** - STM32CubeIDE  
 This is a simple Hello World project using FreeRTOS, where it is added manually, apart from this SEGGER's SystemView is also integrated to record the events taking place and display it on SEGGER SystemView Host Application.  
 
+
 ### FreeRTOS_LedTasks
 **Project Path** - `Without_Cube/FreeRTOS_LedTasks`  
 **Development Environment** - STM32CubeIDE  
 This is a simple FreeRTOS project, where we have taken the `FreeRTOS_HelloWorld` project as base project, in this project the idea is to toggle the user Leds i.e. LD3 (Green LED) and LD4 (Red LED), in two separate tasks created in FreeRTOS.  
 ![alt text](Documentation/FreeRTOS_LedTasks_with_HAL_Delay.PNG "LED Tasks Running with HAL Delay")  
 
+
 The above image is from the recorder catured using the SEGGER SystemView, here it can be seen that the CPU time is wasted un-necessarily in processing the delays i.e. `HAL_Delay`.  
 These types of tasks are known as Continous Tasks, while these can be converted into Periodic Tasks, where CPU will peform the actions and move to Idle Task, saving CPU bandwidth which can be used for several other purposes like putting the CPU into low power mode.  
 And this can be used with the usage of `vTaskDelayUntil` function, and once this is done and after recording the events we see the following.  
 ![alt text](Documentation/FreeRTOS_LedTasks_with_vTaskDelayUntil.PNG "LED Tasks Running with HAL Delay")  
 As highlighted with the blue color, **the CPU is now in Idle state for 86.68%**, and as seen with green highlighted arrow, the Led Green tasks unblocks and runs and the again moved to block state, and same thing happened with the Led Red tasks, hence preventing the CPU bandwidth usage.  
+
+
+### FreeRTOS_TaskNotify
+**Project Path** - `Without_Cube/FreeRTOS_TaskNotify`  
+**Development Environment** - STM32CubeIDE  
+This is a simple FreeRTOS project, where we have taken the `FreeRTOS_HelloWorld` project as base project. In this project we have three tasks running, two tasks for led togglings at different rate, and one button task to detect the button press. If the button is pressed for the first time, the first Led task will be deleted and if the button is again pressed for one more time the second led task will also be deleted, and this task should also delete the button task, as it will not have anything to do. This example is basically created to learn the `vTaskNotify`  
+
+![alt text](Documentation/FreeRTOS_TaskNotify.PNG "FreeRTOS Task Notify and Deleting Tasks")  
+
+As can be seen in the above image, that Red and Green Tasks were executing but when the button is pressed, the button task sends an notification to green led tasks, and as an action green led task has turned on the green led and deleted itself, the same is repeated for red led task also.  
+
