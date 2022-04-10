@@ -71,6 +71,8 @@ TaskHandle_t rtc_task_handle;
 /* We need two queues one for inputs from UART and another for printing */
 QueueHandle_t q_data;
 QueueHandle_t q_print;
+
+uint8_t uart_data;
 /* USER CODE END 0 */
 
 /**
@@ -104,6 +106,7 @@ int main(void)
   MX_RTC_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+
   /* Enable the Cycle Counter i.e. CYCCNT */
   DWT_CTRL |= (0x01 << 0);
 
@@ -130,6 +133,9 @@ int main(void)
   q_data = xQueueCreate( 10, sizeof(char) );
   configASSERT(q_data != NULL);
   q_print = xQueueCreate(10, sizeof(size_t) );
+
+  /* Configure the UART to recive 1 byte of over interrupt */
+  HAL_UART_Receive_IT(&huart1, &uart_data, 1);
 
   /* Start the Scheduler */
   vTaskStartScheduler();
@@ -508,6 +514,34 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_UART_RxCpltCallback( UART_HandleTypeDef *huart )
+{
+  uint8_t dummy;
+  /* check if Queue is full or not */
+  if( xQueueIsQueueFullFromISR(q_data) == pdPASS )
+  {
+    /* Queue is not full, so enqueue the data in queue */
+    xQueueSendFromISR( q_data, (void*)&uart_data, NULL );
+  }
+  else
+  {
+    /* if the received data is \n ? */
+    if( uart_data == '\n' )
+    {
+      /* Make sure the last data byte of the queue is \n */
+      xQueueReceiveFromISR(q_data, (void*)&dummy, NULL);    /* delete the last entry for making space for \n */
+      xQueueSendFromISR( q_data, (void*)&uart_data, NULL );
+    }
+  }
+  /* Send Notification to command handling task if the uart_data = \n */
+  if( uart_data == '\n' )
+  {
+    xTaskNotifyFromISR( command_task_handle, 0, eNoAction, NULL);
+  }
+  /* Enable UART data byte reception again in IT mode */
+  HAL_UART_Receive_IT(&huart1, &uart_data, 1);
+}
+
 void Menu_TaskHandler( void * parameter)
 {
   while(1)
