@@ -34,12 +34,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define DWT_CTRL            (*(volatile uint32_t*)0xE0001000u)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define DWT_CTRL            (*(volatile uint32_t*)0xE0001000u)
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -54,11 +53,17 @@ static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
 static void GreenLED_TaskHandler( void* parameter);
 static void RedLED_TaskHandler( void* parameter );
+static void Button_TaskHandler( void* parameter );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+/* We need task handles to delete the tasks */
+TaskHandle_t green_led_task_handle;
+TaskHandle_t red_led_task_handle;
+TaskHandle_t button_task_handle;
+/* This is a global task handler to hold the handle of the next task to be deleted*/
+volatile TaskHandle_t next_task_handle = NULL;
 /* USER CODE END 0 */
 
 /**
@@ -68,7 +73,6 @@ static void RedLED_TaskHandler( void* parameter );
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  TaskHandle_t green_led_task_handle, red_led_task_handle;
   BaseType_t status;
   /* USER CODE END 1 */
 
@@ -105,6 +109,12 @@ int main(void)
   /* Create Task-2*/
   status = xTaskCreate(RedLED_TaskHandler, "Red LED", 200, NULL, 2, &red_led_task_handle );
   configASSERT(status == pdPASS);
+  /* Create Button, with high priority*/
+  status = xTaskCreate(Button_TaskHandler, "Button Task", 200, NULL, 4, &button_task_handle );
+  configASSERT(status == pdPASS);
+
+  /* Store the next on which we have to take action of deleting */
+  next_task_handle = green_led_task_handle;
 
   /* Start the Scheduler */
   vTaskStartScheduler();
@@ -423,30 +433,84 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+/* USER CODE BEGIN 4 */
 static void GreenLED_TaskHandler( void* parameter)
 {
-  TickType_t last_wake_time;
-  /* Initialize the variable with the current time */
-  last_wake_time = xTaskGetTickCount();
+  BaseType_t status;
   while( 1 )
   {
     SEGGER_SYSVIEW_PrintfTarget("Green LED Task\n");
     /* Toggle On Board Green Led */
     HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-    vTaskDelayUntil( &last_wake_time, pdMS_TO_TICKS(1000) );
+    status = xTaskNotifyWait(0, 0, NULL, pdMS_TO_TICKS(1000) );
+    if( status == pdTRUE )
+    {
+      /* this means that this task has received the notification and it's time
+      to delete this task, but before deleting update the handle for next task*/
+      /*NOTE: new_task_handle is a global variable and updating it directly can
+      have some issues, as it is shared with other tasks also, so it's better to
+      protect this variable unintentionally, this can be done by suspending and
+      resuming the scheduler */
+      vTaskSuspendAll();
+      next_task_handle = red_led_task_handle;
+      xTaskResumeAll();
+      /* before deleting turn on the LED permanently */
+      HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET );
+      /* passing NULL means deleting self */
+      vTaskDelete(NULL);
+    }
   }
 }
+
 static void RedLED_TaskHandler( void* parameter )
 {
-  TickType_t last_wake_time;
-  /* Initialize the variable with the current time */
-  last_wake_time = xTaskGetTickCount();
-  while ( 1 )
+  BaseType_t status;
+  while( 1 )
   {
-    SEGGER_SYSVIEW_PrintfTarget("Red LED Task\n");
+    SEGGER_SYSVIEW_PrintfTarget("RED LED Task\n");
     /* Toggle On Board RED Led */
     HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
-    vTaskDelayUntil( &last_wake_time, pdMS_TO_TICKS(500) );
+    status = xTaskNotifyWait(0, 0, NULL, pdMS_TO_TICKS(500) );
+    if( status == pdTRUE )
+    {
+      /* this means that this task has received the notification and it's time
+      to delete this task, & since no other next task it is set to NULL */
+      /*NOTE: new_task_handle is a global variable and updating it directly can
+      have some issues, as it is shared with other tasks also, so it's better to
+      protect this variable unintentionally, this can be done by suspending and
+      resuming the scheduler */
+      vTaskSuspendAll();
+      next_task_handle = NULL;
+      xTaskResumeAll();
+      /* before deleting turn on the LED permanently */
+      HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET );
+      /*delete button task first and then delete the current task */
+      vTaskDelete(button_task_handle);
+      /* passing NULL means deleting self */
+      vTaskDelete(NULL);
+    }
+  }
+}
+
+static void Button_TaskHandler( void* parameter )
+{
+  GPIO_PinState btn_read = GPIO_PIN_RESET;
+  GPIO_PinState prev_read = GPIO_PIN_RESET;
+  while( 1 )
+  {
+    btn_read = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
+    if( btn_read == GPIO_PIN_SET )
+    {
+      /* if earlier also the button was pressed */
+      if( prev_read == GPIO_PIN_RESET )
+      {
+        xTaskNotify( next_task_handle, 0, eNoAction );
+        SEGGER_SYSVIEW_PrintfTarget("Button Pressed Notification Sent\n");
+      }
+    }
+    prev_read = btn_read;
+    /* 10ms wait time */
+    vTaskDelay(pdMS_TO_TICKS(10));
   }
 }
 /* USER CODE END 4 */
