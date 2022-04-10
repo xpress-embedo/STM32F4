@@ -446,12 +446,21 @@ falling edge is detected and EXTI is configured for falling edge.
 rising edge is button pressed while falling edge is button released */
 void Button_ISR_Handler( void )
 {
+  BaseType_t pxHigherPriorityTaskWoken;
   /* we also want the SeggerSystem View to track this interrupt we have to
   include the following statements for entry and exit */
   traceISR_ENTER();
   /* here we can't use xTaskNotify API here we have to the FromISR version as
   this is an ISR function */
-  xTaskNotifyFromISR( next_task_handle, 0, eNoAction, NULL);
+  xTaskNotifyFromISR( next_task_handle, 0, eNoAction, &pxHigherPriorityTaskWoken);
+  /* pxHigherPriorityTaskWoken is set to pdTRUE if sending the notification
+  caused a task to unblock, and the unblocked task has the priority higher than
+  the currently running task */
+  if( pxHigherPriorityTaskWoken == pdTRUE )
+  {
+    /* As the task in unblocked, so we have to yield from the interrupt handler*/
+    portYIELD_FROM_ISR(pxHigherPriorityTaskWoken);
+  }
 
   traceISR_EXIT();
 }

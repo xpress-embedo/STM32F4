@@ -81,3 +81,9 @@ This button ISR will send a notifcation to the tasks to delete the tasks, here t
 ![alt text](Documentation/FreeRTOS_ButtonISR_TaskReady_But_Not_Executed.PNG "Notify Tasks from ISR")  
 
 As can be seen in the above image, when ISR22 occurs (which is for External Interrupt), our Green Led task becomes ready, but still the FreeRTOS was executing the Idle task, until the SysTick interrupts again, as can be see in the above there is a delay of around 800 useconds, and this is not good, ideally the task should execute right away because Idle Task in not a high priority task as compared to the Green Led task.  
+But this problem can be solved by using the `pxHigherPriorityTaskWoken` field of the `xTaskNotifyFromISR` FreeRTOS API as shown below.  
+`xTaskNotifyFromISR( next_task_handle, 0, eNoAction, &pxHigherPriorityTaskWoken);`  
+If pxHigherPriorityTaskWoken is set to pdTRUE, when sending the notification caused a task to unblock, and the unblocked task has the priority higher than
+the currently running task, and then by using the function/macro call `portYIELD_FROM_ISR(pxHigherPriorityTaskWoken)`, this issue can be solved, aslo shown in the below image.  
+![alt text](Documentation/FreeRTOS_ButtonISR_YieldFromISR.PNG "Notify Tasks from ISR")  
+As can be seen from the above image, ISR22 causes the Green Led task handler to ready state and then scheduler is run to make a switch to Green Led task handler function.  
