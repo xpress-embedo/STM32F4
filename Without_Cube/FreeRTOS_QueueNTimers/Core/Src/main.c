@@ -24,7 +24,9 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "timers.h"
 #include <stdio.h>
+#include <string.h>
 #include "SEGGER_SYSVIEW.h"
 /* USER CODE END Includes */
 
@@ -76,6 +78,11 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 static void Command_Processor( Command_s *s_cmd );
 static int8_t Command_Extractor( Command_s *s_cmd );
+static void Led_Effect( uint8_t option );
+static void Led_Effect_Callback( TimerHandle_t xTimer );
+static void Led_Effect1( void );
+static void Led_Effect2( void );
+static void Led_Effect3( void );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -93,6 +100,8 @@ QueueHandle_t q_print;
 uint8_t uart_data;
 
 Application_States_e e_state = MAIN_MENU;
+/* Software Timer for Led Effects */
+TimerHandle_t led_effect_timer[3];
 /* USER CODE END 0 */
 
 /**
@@ -156,6 +165,13 @@ int main(void)
 
   /* Configure the UART to recive 1 byte of over interrupt */
   HAL_UART_Receive_IT(&huart1, &uart_data, 1);
+
+  /* Create Software Timers for Led Effects */
+  for( uint8_t i=0; i<3; i++ )
+  {
+    led_effect_timer[i] = xTimerCreate( "led_timer", pdMS_TO_TICKS(500), pdTRUE,\
+                                        (void*)(i+1), Led_Effect_Callback );
+  }
 
   /* Start the Scheduler */
   vTaskStartScheduler();
@@ -564,9 +580,50 @@ void HAL_UART_RxCpltCallback( UART_HandleTypeDef *huart )
 
 void Menu_TaskHandler( void * parameter)
 {
+  uint32_t command_address;
+  Command_s *s_cmd;
+  int option;
+  const char * msg_menu = "=======================\n"
+                          "==========MENU=========\n"
+                          "=======================\n"
+                          "LED Effect    => 0     \n"
+                          "Date and Time => 1     \n"
+                          "Exit          => 2     \n"
+                          "Enter your choice here:\n";
+  const char * msg_invalid = "Entered Value is Invalid\n";
   while(1)
   {
+    xQueueSend( q_print, &msg_menu, portMAX_DELAY );
+    xTaskNotifyWait(0, 0, &command_address, portMAX_DELAY );
+    s_cmd = (Command_s*)command_address;
+    if( s_cmd->len == 1 )
+    {
+      option = s_cmd->payload[1] - 48;
+      switch( option )
+      {
+        case 0:
+          e_state = LED_EFFECT;
+          xTaskNotify( led_task_handle, 0, eNoAction);
+          break;
+        case 1:
+          e_state = RTC_MENU;
+          xTaskNotify( rtc_task_handle, 0, eNoAction);
+          break;
+        case 2:
+          /* implement exit */
+          break;
+        default:
+          xQueueSend( q_print, &msg_invalid, portMAX_DELAY );
+          continue;
+      }
+    }
+    else
+    {
+      /* this is an invalid entry */
+      xQueueSend( q_print, &msg_invalid, portMAX_DELAY );
+    }
 
+    xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
   }
 }
 
@@ -591,17 +648,68 @@ void Command_TaskHandler( void * parameter )
 
 void Print_TaskHandler( void * parameter )
 {
+  uint32_t *msg;
   while(1)
   {
-
+    xQueueReceive(q_print, &msg, portMAX_DELAY);
+    HAL_UART_Transmit( &huart1, (uint8_t*)msg, strlen((char *)msg), HAL_MAX_DELAY );
   }
 }
 
 void LED_TaskHandler( void * parameter)
 {
+  uint32_t command_address;
+  Command_s *s_cmd;
+  const char * msg_led  = "=======================\n"
+                          "========LED EFFECT=====\n"
+                          "=======================\n"
+                          "(none, e1, e2, e3)     \n"
+                          "Enter your choice here:\n";
+  const char * msg_invalid = "Entered Value is Invalid\n";
   while(1)
   {
+    /* Wait for Notification */
+    xTaskNotifyWait( 0, 0, NULL, portMAX_DELAY );
 
+    /* Print Led Menu */
+    xQueueSend( q_print, msg_led, portMAX_DELAY);
+
+    /* Wait for LED Commands (notify wait ) */
+    xTaskNotifyWait(0, 0, &command_address, portMAX_DELAY );
+    s_cmd = (Command_s*)command_address;
+
+    if( s_cmd->len <= 4 )   /* none=4 and e1, e2, e3 are 2 */
+    {
+      if( !strcmp( (char*)s_cmd->payload, "none") )
+      {
+        Led_Effect(0);
+      }
+      else if( !strcmp( (char*)s_cmd->payload, "e1") )
+      {
+        Led_Effect(1);
+      }
+      else if( !strcmp( (char*)s_cmd->payload, "e2") )
+      {
+        Led_Effect(2);
+      }
+      else if( !strcmp( (char*)s_cmd->payload, "e3") )
+      {
+        Led_Effect(3);
+      }
+      else
+      {
+        /* Print Invalid Message */
+        xQueueSend(q_print, msg_invalid, portMAX_DELAY );
+      }
+    }
+    else
+    {
+      /* Print Invalid Message */
+      xQueueSend(q_print, msg_invalid, portMAX_DELAY );
+    }
+    /* update the application state to menu state */
+    e_state = MAIN_MENU;
+    xTaskNotify(menu_task_handle, 0, eNoAction );
   }
 }
 
@@ -609,7 +717,7 @@ void RTC_TaskHandler( void * parameter)
 {
   while(1)
   {
-
+    taskYIELD();
   }
 }
 
@@ -621,15 +729,18 @@ static void Command_Processor( Command_s *s_cmd )
   {
     case MAIN_MENU:
       /* Notify Menu Task with the Command */
+      xTaskNotify(menu_task_handle, (uint32_t)s_cmd, eSetValueWithOverwrite );
       break;
     case LED_EFFECT:
       /* Notify Led Effect Task with the Command */
+      xTaskNotify(led_task_handle, (uint32_t)s_cmd, eSetValueWithOverwrite );
       break;
     case RTC_MENU:
     case RTC_TIME_CONFIG:
     case RTC_DATE_CONFIG:
     case RTC_REPORT:
       /* Notify RTC Task with the Command */
+      xTaskNotify(rtc_task_handle, (uint32_t)s_cmd, eSetValueWithOverwrite );
       break;
   }
 }
@@ -659,6 +770,58 @@ static int8_t Command_Extractor( Command_s *s_cmd )
   s_cmd->payload[i-1] = '\0';
   s_cmd->len = i-1;
   return 0;
+}
+
+static void Led_Effect( uint8_t option )
+{
+  /* stop any previous effects which means stopping all previous running timers*/
+  for( uint8_t idx=0; idx<3; idx++ )
+  {
+    xTimerStop( led_effect_timer[idx], portMAX_DELAY );
+  }
+  /* Turn off both leds first */
+  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET );
+  HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET );
+
+  /* Select/Start the newly selected timer */
+  if( option )
+  {
+    /* And Start the selected led effect --> timer to produce the effect */
+    xTimerStart( led_effect_timer[option-1], portMAX_DELAY );
+  }
+}
+
+static void Led_Effect_Callback( TimerHandle_t xTimer )
+{
+  uint32_t id = (uint32_t)pvTimerGetTimerID(xTimer);
+  switch( id )
+  {
+    case 1:
+      Led_Effect1();
+      break;
+    case 2:
+      Led_Effect2();
+      break;
+    case 3:
+      Led_Effect3();
+      break;
+  }
+}
+
+static void Led_Effect1( void )
+{
+  HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin );
+}
+
+static void Led_Effect2( void )
+{
+  HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin );
+}
+
+static void Led_Effect3( void )
+{
+  HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin );
+  HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin );
 }
 
 /* USER CODE END 4 */
