@@ -155,15 +155,15 @@ int main(void)
   status = xTaskCreate(LED_TaskHandler, "LED Task", 200, NULL, 2, &led_task_handle );
   configASSERT(status == pdPASS);
 
-  status = xTaskCreate(RTC_TaskHandler, "RTC Task", 200, NULL, 2, &rtc_task_handle );
-  configASSERT(status == pdPASS);
+//  status = xTaskCreate(RTC_TaskHandler, "RTC Task", 200, NULL, 2, &rtc_task_handle );
+//  configASSERT(status == pdPASS);
 
   /* Create Queues */
   q_data = xQueueCreate( 10, sizeof(char) );
   configASSERT(q_data != NULL);
   q_print = xQueueCreate(10, sizeof(size_t) );
 
-  /* Configure the UART to recive 1 byte of over interrupt */
+  /* Configure the UART to receive 1 byte of over interrupt */
   HAL_UART_Receive_IT(&huart1, &uart_data, 1);
 
   /* Create Software Timers for Led Effects */
@@ -554,7 +554,7 @@ void HAL_UART_RxCpltCallback( UART_HandleTypeDef *huart )
 {
   uint8_t dummy;
   /* check if Queue is full or not */
-  if( xQueueIsQueueFullFromISR(q_data) == pdPASS )
+  if( xQueueIsQueueFullFromISR(q_data) != pdPASS )
   {
     /* Queue is not full, so enqueue the data in queue */
     xQueueSendFromISR( q_data, (void*)&uart_data, NULL );
@@ -598,7 +598,7 @@ void Menu_TaskHandler( void * parameter)
     s_cmd = (Command_s*)command_address;
     if( s_cmd->len == 1 )
     {
-      option = s_cmd->payload[1] - 48;
+      option = s_cmd->payload[0] - 48;
       switch( option )
       {
         case 0:
@@ -621,6 +621,7 @@ void Menu_TaskHandler( void * parameter)
     {
       /* this is an invalid entry */
       xQueueSend( q_print, &msg_invalid, portMAX_DELAY );
+      continue;
     }
 
     xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
@@ -672,7 +673,7 @@ void LED_TaskHandler( void * parameter)
     xTaskNotifyWait( 0, 0, NULL, portMAX_DELAY );
 
     /* Print Led Menu */
-    xQueueSend( q_print, msg_led, portMAX_DELAY);
+    xQueueSend( q_print, &msg_led, portMAX_DELAY);
 
     /* Wait for LED Commands (notify wait ) */
     xTaskNotifyWait(0, 0, &command_address, portMAX_DELAY );
@@ -699,13 +700,13 @@ void LED_TaskHandler( void * parameter)
       else
       {
         /* Print Invalid Message */
-        xQueueSend(q_print, msg_invalid, portMAX_DELAY );
+        xQueueSend(q_print, &msg_invalid, portMAX_DELAY );
       }
     }
     else
     {
       /* Print Invalid Message */
-      xQueueSend(q_print, msg_invalid, portMAX_DELAY );
+      xQueueSend(q_print, &msg_invalid, portMAX_DELAY );
     }
     /* update the application state to menu state */
     e_state = MAIN_MENU;
