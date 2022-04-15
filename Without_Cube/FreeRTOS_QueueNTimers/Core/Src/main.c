@@ -80,9 +80,15 @@ static void Command_Processor( Command_s *s_cmd );
 static int8_t Command_Extractor( Command_s *s_cmd );
 static void Led_Effect( uint8_t option );
 static void Led_Effect_Callback( TimerHandle_t xTimer );
+static void RTC_ReportCallback( TimerHandle_t xRTC );
 static void Led_Effect1( void );
 static void Led_Effect2( void );
 static void Led_Effect3( void );
+static void RTC_ConfigureTime( RTC_TimeTypeDef *time );
+static void RTC_ConfigureDate( RTC_DateTypeDef *date );
+static void RTC_ShowDateTime( void );
+static uint8_t Validate_RTC_Information( RTC_TimeTypeDef *time, RTC_DateTypeDef *date );
+static uint8_t Convert_To_Number( uint8_t *data, uint8_t len );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -102,6 +108,9 @@ uint8_t uart_data;
 Application_States_e e_state = MAIN_MENU;
 /* Software Timer for Led Effects */
 TimerHandle_t led_effect_timer[3];
+/* Software Timer for RTC Reporting */
+TimerHandle_t rtc_timer;
+const char * msg_invalid = "Entered Value is Invalid\n";
 /* USER CODE END 0 */
 
 /**
@@ -155,8 +164,8 @@ int main(void)
   status = xTaskCreate(LED_TaskHandler, "LED Task", 200, NULL, 2, &led_task_handle );
   configASSERT(status == pdPASS);
 
-//  status = xTaskCreate(RTC_TaskHandler, "RTC Task", 200, NULL, 2, &rtc_task_handle );
-//  configASSERT(status == pdPASS);
+  status = xTaskCreate(RTC_TaskHandler, "RTC Task", 200, NULL, 2, &rtc_task_handle );
+  configASSERT(status == pdPASS);
 
   /* Create Queues */
   q_data = xQueueCreate( 10, sizeof(char) );
@@ -172,6 +181,10 @@ int main(void)
     led_effect_timer[i] = xTimerCreate( "led_timer", pdMS_TO_TICKS(500), pdTRUE,\
                                         (void*)(i+1), Led_Effect_Callback );
   }
+
+  /* Create Software Timer for RTC reporting */
+  rtc_timer = xTimerCreate( "RTC Timer", pdMS_TO_TICKS(1000), pdTRUE, NULL, \
+                            RTC_ReportCallback );
 
   /* Start the Scheduler */
   vTaskStartScheduler();
@@ -590,7 +603,6 @@ void Menu_TaskHandler( void * parameter)
                           "Date and Time => 1     \n"
                           "Exit          => 2     \n"
                           "Enter your choice here:\n";
-  const char * msg_invalid = "Entered Value is Invalid\n";
   while(1)
   {
     xQueueSend( q_print, &msg_menu, portMAX_DELAY );
@@ -666,7 +678,6 @@ void LED_TaskHandler( void * parameter)
                           "=======================\n"
                           "(none, e1, e2, e3)     \n"
                           "Enter your choice here:\n";
-  const char * msg_invalid = "Entered Value is Invalid\n";
   while(1)
   {
     /* Wait for Notification */
@@ -716,9 +727,219 @@ void LED_TaskHandler( void * parameter)
 
 void RTC_TaskHandler( void * parameter)
 {
+  #define HH_CONFIG       0u
+  #define MM_CONFIG       1u
+  #define SS_CONFIG       2u
+
+  #define DATE_CONFIG     0u
+  #define MONTH_CONFIG    1u
+  #define YEAR_CONFIG     2u
+  #define DOW_CONFIG      3u
+
+  static uint8_t rtc_state = 0u;
+  uint32_t command_address;
+  Command_s *s_cmd;
+  uint8_t rtc_sub_menu_option;
+  RTC_TimeTypeDef time;
+  RTC_DateTypeDef date;
+  uint8_t temp = 0u;
+
+  const char* msg1_rtc =  "=======================\n"
+                          "==========RTC==========\n"
+                          "=======================\n";
+
+  const char* msg2_rtc  = "Configure Time   => 0  \n"
+                          "Configure Date   => 1  \n"
+                          "Enable Reporting => 2  \n"
+                          "Exit             => 3  \n"
+                          "Enter your choice ? :  \n";
+
+  const char *msg_rtc_hh = "Enter hour(1-12):";
+  const char *msg_rtc_mm = "Enter minutes(0-59):";
+  const char *msg_rtc_ss = "Enter seconds(0-59):";
+
+  const char *msg_rtc_dd  = "Enter date(1-31):";
+  const char *msg_rtc_mo  = "Enter month(1-12):";
+  const char *msg_rtc_dow = "Enter day(1-7 sun:1):";
+  const char *msg_rtc_yr  = "Enter year(0-99):";
+
+  const char *msg_conf = "Configuration successful\n";
+  const char *msg_rtc_report = "Enable time & date reporting(y/n)?: ";
+
   while(1)
   {
-    taskYIELD();
+    /* Wait till someone notifies */
+    xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
+
+    /* Print the Menu and Show Current Date and Time Information */
+    xQueueSend( q_print, &msg1_rtc, portMAX_DELAY);
+    RTC_ShowDateTime();
+    xQueueSend( q_print, &msg2_rtc, portMAX_DELAY);
+
+    while( e_state != MAIN_MENU )
+    {
+      /* wait for command notification */
+      xTaskNotifyWait(0, 0, &command_address, portMAX_DELAY );
+      s_cmd = (Command_s*)command_address;
+
+      switch( e_state )
+      {
+        case RTC_MENU:
+          /* Process the RTC Menu Command */
+          if( s_cmd->len == 1 )
+          {
+            rtc_sub_menu_option = s_cmd->payload[0] - 48u;
+            switch( rtc_sub_menu_option )
+            {
+              case 0:
+                e_state = RTC_TIME_CONFIG;
+                xQueueSend( q_print, &msg_rtc_hh, portMAX_DELAY);
+                break;
+              case 1:
+                e_state = RTC_DATE_CONFIG;
+                xQueueSend( q_print, &msg_rtc_dd, portMAX_DELAY);
+                break;
+              case 2:
+                e_state = RTC_REPORT;
+                xQueueSend( q_print, &msg_rtc_report, portMAX_DELAY);
+                break;
+              case 3:
+                e_state = MAIN_MENU;
+                break;
+              default:
+                e_state = MAIN_MENU;
+                xQueueSend( q_print, &msg_invalid, portMAX_DELAY);
+                break;
+            }
+          }
+          else
+          {
+            e_state = MAIN_MENU;
+            xQueueSend( q_print, &msg_invalid, portMAX_DELAY);
+          }
+          break;
+        case RTC_TIME_CONFIG:
+          /* Get Hour (hh), minute (mm) and seconds (ss) information and  configure the RTC */
+          switch ( rtc_state )
+          {
+            case HH_CONFIG:
+              temp = Convert_To_Number(s_cmd->payload, s_cmd->len );
+              time.Hours = temp;
+              rtc_state = MM_CONFIG;
+              /* Request the user to enter minute information */
+              xQueueSend( q_print, &msg_rtc_mm, portMAX_DELAY);
+              break;
+            case MM_CONFIG:
+              temp = Convert_To_Number(s_cmd->payload, s_cmd->len );
+              time.Minutes = temp;
+              rtc_state = SS_CONFIG;
+              /* Request the user to enter seconds information */
+              xQueueSend( q_print, &msg_rtc_ss, portMAX_DELAY);
+              break;
+            case SS_CONFIG:
+              temp = Convert_To_Number(s_cmd->payload, s_cmd->len );
+              time.Seconds = temp;
+              if( Validate_RTC_Information( &time, NULL) )
+              {
+                /* RTC Data entered is acceptable */
+                RTC_ConfigureTime(&time);
+                /* Send Configuration Successful message */
+                xQueueSend( q_print, &msg_conf, portMAX_DELAY );
+                /* Also display updated date and time information */
+                RTC_ShowDateTime();
+              }
+              else
+              {
+                /* Entered data is invalid, send the invalid message to print */
+                xQueueSend( q_print, &msg_invalid, portMAX_DELAY );
+              }
+              rtc_state = HH_CONFIG;
+              /* Reset the state */
+              e_state = MAIN_MENU;
+              break;
+          }
+          break;
+        case RTC_DATE_CONFIG:
+          /* Get date (dd), month (mm), year (yy) and day of week and  configure the RTC */
+          switch ( rtc_state )
+          {
+            case DATE_CONFIG:
+              temp = Convert_To_Number(s_cmd->payload, s_cmd->len );
+              date.Date = temp;
+              rtc_state = MONTH_CONFIG;
+              /* Request the user to enter month information */
+              xQueueSend( q_print, &msg_rtc_mo, portMAX_DELAY);
+              break;
+            case MONTH_CONFIG:
+              temp = Convert_To_Number(s_cmd->payload, s_cmd->len );
+              date.Month = temp;
+              rtc_state = YEAR_CONFIG;
+              /* Request the user to enter year information */
+              xQueueSend( q_print, &msg_rtc_yr, portMAX_DELAY);
+              break;
+            case YEAR_CONFIG:
+              temp = Convert_To_Number(s_cmd->payload, s_cmd->len );
+              date.Year = temp;
+              rtc_state = DOW_CONFIG;
+              /* Request the user to enter day of week information */
+              xQueueSend( q_print, &msg_rtc_dow, portMAX_DELAY);
+              break;
+            case DOW_CONFIG:
+              temp = Convert_To_Number(s_cmd->payload, s_cmd->len );
+              date.WeekDay = temp;
+              if( Validate_RTC_Information( NULL, &date) )
+              {
+                /* RTC Data entered is acceptable */
+                RTC_ConfigureDate(&date);
+                /* Send Configuration Successful message */
+                xQueueSend( q_print, &msg_conf, portMAX_DELAY );
+                /* Also display updated date and time information */
+                RTC_ShowDateTime();
+              }
+              else
+              {
+                /* Entered data is invalid, send the invalid message to print */
+                xQueueSend( q_print, &msg_invalid, portMAX_DELAY );
+              }
+              rtc_state = HH_CONFIG;
+              /* Reset the state */
+              e_state = MAIN_MENU;
+              break;
+          }
+          break;
+        case RTC_REPORT:
+          /* Enable to disable the RTC Current Time reporting over UART,
+          instructor has used ITM instead of UART, but on my board SB9 bridge is
+          not connected hence I have to send it over UART */
+          if( s_cmd->len == 1 )
+          {
+            if( s_cmd->payload[0] == 'y' )
+            {
+              /* If timer is not running, then start the timer */
+              if( xTimerIsTimerActive(rtc_timer) == pdFALSE )
+              {
+                xTimerStart(rtc_timer, portMAX_DELAY);
+              }
+            }
+            else if( s_cmd->payload[0] == 'n' )
+            {
+              /* If timer is running, then stop it */
+              if( xTimerIsTimerActive(rtc_timer) == pdTRUE )
+              {
+                xTimerStop(rtc_timer, portMAX_DELAY);
+              }
+            }
+            else
+            {
+              xQueueSend( q_print, &msg_invalid, portMAX_DELAY );
+            }
+          }
+          e_state = MAIN_MENU;
+          break;
+      }
+    }
+    /* Notify the Main task */
+    xTaskNotify( menu_task_handle, 0, eNoAction );
   }
 }
 
@@ -825,6 +1046,90 @@ static void Led_Effect3( void )
   HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin );
 }
 
+static void RTC_ConfigureTime( RTC_TimeTypeDef *time )
+{
+  time->TimeFormat = RTC_HOURFORMAT12_AM;
+  time->DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+  time->StoreOperation = RTC_STOREOPERATION_RESET;
+
+  HAL_RTC_SetTime(&hrtc, time, RTC_FORMAT_BIN);
+}
+
+static void RTC_ConfigureDate( RTC_DateTypeDef *date )
+{
+  HAL_RTC_SetDate(&hrtc, date, RTC_FORMAT_BIN);
+}
+
+static void RTC_ShowDateTime( void )
+{
+  static char show_time[40];
+  static char show_date[40];
+  static char *time = show_time;
+  static char *date = show_date;
+  RTC_DateTypeDef rtc_date;
+  RTC_TimeTypeDef rtc_time;
+  char *format;
+
+  memset(&rtc_date, 0, sizeof(rtc_date) );
+  memset(&rtc_time, 0, sizeof(rtc_time) );
+
+  /* Get the RTC Current Time */
+  HAL_RTC_GetTime(&hrtc, &rtc_time, RTC_FORMAT_BIN );
+  /* Get the RTC Current Date */
+  HAL_RTC_GetDate(&hrtc, &rtc_date, RTC_FORMAT_BIN );
+
+  format = (rtc_time.TimeFormat == RTC_HOURFORMAT12_AM) ? "AM" : "PM";
+
+  /* Display time format hh:mm:ss [AM/PM] */
+  sprintf((char*)show_time,"%s:\t%02d:%02d:%02d [%s]","\nCurrent Time & Date",\
+          rtc_time.Hours, rtc_time.Minutes, rtc_time.Seconds,format);
+  xQueueSend(q_print,&time,portMAX_DELAY);
+
+  /* Display date Format : date-month-year */
+  sprintf((char*)show_date,"\t%02d-%02d-%2d\n",rtc_date.Month, rtc_date.Date, 2000 + rtc_date.Year);
+  xQueueSend(q_print,&date,portMAX_DELAY);
+}
+
+static void RTC_ReportCallback( TimerHandle_t xRTC )
+{
+  /* Sending Data Over UART, instructor has used the ITM but in board SB9 bridge
+  is not soldered and hence ITM doesn't work */
+  RTC_ShowDateTime();
+}
+
+static uint8_t Validate_RTC_Information( RTC_TimeTypeDef *time, RTC_DateTypeDef *date )
+{
+  uint8_t status = 1;
+  if( time )
+  {
+    if( (time->Hours > 12) || (time->Minutes > 59) || (time->Seconds > 59) )
+    {
+      status = 0;
+    }
+  }
+  if( date )
+  {
+    if( (date->Date > 31) || (date->WeekDay > 7) || (date->Year > 99) || (date->Month > 12) )
+    {
+      status = 0;
+    }
+  }
+  return status;
+}
+
+static uint8_t Convert_To_Number( uint8_t *data, uint8_t len )
+{
+  uint8_t value = 0u;
+  if( len > 1 )
+  {
+    value = ((data[0]-48)*10u) + (data[1]-48);
+  }
+  else
+  {
+    value = data[0] - 48;
+  }
+  return value;
+}
 /* USER CODE END 4 */
 
 /**
