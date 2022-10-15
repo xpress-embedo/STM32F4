@@ -123,7 +123,37 @@ RGB is a model in which Red-Green-Blue primary colors are added together in vari
   * An image 1600x900(HD+ resolution) will portray more details about the image than 1280x720(HD resolution) image.
   * Display Resolution is the number of pixels available in a given size of the display arranged in standard graphics display width and height dimensions.
 
+## Converting BMP Images to C Array
+### How many Bytes of memory does an image consume?
+Resolution of the bitmap image is 480x270.  
+Pixel Format is ARGB8888.  
+```
+Total Memory Consumed = Width X Height X (bpp/8) = 480 X 270 X 32/8  
+Total Memory Consumed = 506.25 KB
+```
+### BMP Images
+* An BMP Image file contains uncompressed pixel data, hence consumes more space on the disk.
+  * BMP file cosists of File Meta Data and Uncompressed Pixel Data.
+* We can directly read the pixel values and display them on the display module.
+  * This is also an advantage of using the bmp images, but it consumes more space, contrary to that we can use jpeg images but the data is in compressed format and hence a jpeg decoder middleware is needed or there are now many microcontrollers with jpeg decoder peripheral.
 
+### Converting BMP to C Array
+There are basically a lot of free tools available for this purpose or we can create one our own also. But LVGL also provides an online tool for this purpose and that can be found under the following link.  
+[Image Converter Tool LVGL](https://lvgl.io/tools/imageconverter)
 
+### Selecting Pixel Format for the application
+This depends of the following things.  
+* Pixel format support by the LCD Driver chip.
+* Desired Color Range.
+* Microcontroller RAM space availability.
+* Microcontroller FLASH space availability.
 
+The Roaring tiger image has approximate size of 506KB and it is in format ARGB888, and if we consider our hardware the total on-chip flash is 2MB and RAM is 256KB only.  
+But the LCD Driver which wer using i.e. ILI9341 supports only RGB565/RGB666/RGB222 Pixel Formats only.  
+Let's say we selected RGB565 pixel format, RGB565 1pixel consumes 2 bytes and hence if we have to display three images or frames.
+```C
+= (320 x 240 x 2) * 3 = 450 KB    // NOTE: the display dimension is 320 x 240
+```
+
+## LTDC Peripheral of the ST Microcontroller
 
