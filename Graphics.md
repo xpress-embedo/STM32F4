@@ -155,5 +155,59 @@ Let's say we selected RGB565 pixel format, RGB565 1pixel consumes 2 bytes and he
 = (320 x 240 x 2) * 3 = 450 KB    // NOTE: the display dimension is 320 x 240
 ```
 
-## LTDC Peripheral of the ST Microcontroller
+## LCD TFT Display Controller
+### LTDC Peripheral of the ST Microcontroller
+* First we have to configure and enable the LTDC peripheral (LCD TFT Display Controller) of the microcontroller
+* LTDC of the MCU generates all synchronization and timings signals and transfers RGB components to the display.
+* Display which has a display driver chip that interprets those signals and drives the display panel to light the desired pixels.
+
+### Display Interface Types
+* MIPI DPI (Display Pixel Interface)
+* MIPI DBI (Display Bus Interface/MCU Interface)
+* MIPI DSI (Display Serial Interface)
+
+### MIPI
+The above display interfaces are standarized by MIPI which stands for Mobile Industry Process Interface Alliance.  
+* MIPI Alliance develops interface specifications for mobile and mobile-influenced devices.
+* In the mobile industry, companies use MIPI Alliance specifications when developing smartphones, tablets, laptops and hybrid devices.
+
+#### MIPI DPI
+* This is also called as RGB Interface.
+* Applies to display interface which uses 16/18/24-bit data lines and control signals.
+* The MIPI DPI specification standardizes the data and control signals to be used by manufacturers of mobile device processors, cameras, and display.
+* The DPI interface is typically used when the display module doesn't support the frame buffer (GRAM). The host controller must stream the data in real-time to the display.
+* This is the one used in STM32F4 Discovery Kit which we are using.
+
+#### MIPI DBI (Display Bus Interface)
+* This is also known as MCU Interface
+* The MIPI DBI is used to interface with a display module with an integrated graphic RAM (GRAM). The pixel data is first updated in the local GRAM of the display driver chip which repeatedly refreshes the display.
+* Host and Display Module can be connected by simple GPIO's.
+* Types of MIPI-DBI are:
+  * DBI Type-A: based on Motorola 6800 bus
+  * DBI Type-B: based on Intel 8080 bus
+  * DBI Type-C: based on SPI Protocol (3 or 4 line SPI Interface)
+
+### RGB Interface Signals
+#### VSync
+* This is a vertical synchronization signal sent from the host display controller (LTDC) to the display module.
+* This signal marks the _start/beginning of the new frame_. That means, when this signal asserts, the display module understands that the host controller is going to send a new frame.
+
+#### HSync
+* This is a horizontal synchronization signal sent from the host display controller (LTDC) to the display module.
+* This signal marks the _start of a new line of the frame_. That means, when the signal asserts, the display module understands that the host controller will send  a new line of current frame.
+
+#### DE
+* This is sent from the host controller (LTDC) and indicates whether the RGB data is valid or not.
+* When `DE=0`, the display module doesn't read the RGB data because it is invalid.
+* When `DE=1`, the display module reads the RGB data and displays it.
+
+#### DOTCLK (PCLK)
+* The clock signal is sent from the host controller (LTDC) to read the RGB data when `DE=1`, display module reads the RGB data during the rising edge of the DOTCLK.
+* This also indicates how fast RGB data is made available to the display module.
+
+#### RGB Data Lines
+* The host controller must support 24-bit data lines to carry RGB data.
+* This display modules samples these data lines only when `DE=1` during the rising edge of the DOTCLK.
+* Note that the display does not need to support the 24 data lines to accept RGB data. We have to check the display module's pin capability while interfacing.
+
 
