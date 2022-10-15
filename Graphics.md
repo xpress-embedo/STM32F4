@@ -78,6 +78,10 @@ RGB is a model in which Red-Green-Blue primary colors are added together in vari
     * This is also called as **Pixel Depth**, **Color Depth** or **Bit Depth**  
     * This depends on the pixel format and is measured in bpp (bits per pixel)  
 * Pixel Density (PPI-Pixel Per Inch)
+  * Pixel Density is measured in PPI which means Pixel Per Inch.
+  * It denotes how many pixels are there in per inch of the display.
+  * More pixels/inch means more clarity of the image and texts shown on the display.
+  * As PPI of the display increases, it is capable of showing high resolution images (more pixel information) in less space without or with less degradation of the quality of the image.
 * Pixel Color Depth (Bit Depth)
 * Pixel Format (Color Formats)
   * The following tables shows some pixel formats (color formats).  
@@ -115,6 +119,11 @@ RGB is a model in which Red-Green-Blue primary colors are added together in vari
     | 470x270       | RGB888          | 470 * 270 * 3 = 3805kb          |
     | 470x270       | L8_RGB888       | 470 * 270 * 1 + 256*3 = 127.3kb |
 * Resolution
+  * It is the number of pixels used to represents an image arranged in standard graphics display width and height dimensions.
+  * An image 1600x900(HD+ resolution) will portray more details about the image than 1280x720(HD resolution) image.
+  * Display Resolution is the number of pixels available in a given size of the display arranged in standard graphics display width and height dimensions.
+
+
 
 
 
