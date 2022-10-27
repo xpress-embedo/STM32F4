@@ -161,6 +161,33 @@ Let's say we selected RGB565 pixel format, RGB565 1pixel consumes 2 bytes and he
 * LTDC of the MCU generates all synchronization and timings signals and transfers RGB components to the display.
 * Display which has a display driver chip that interprets those signals and drives the display panel to light the desired pixels.
 
+### LTDC Main Features of STM32
+* 24-bit RGB Parallel Pixel Output; 8-bits-per-pixel (RGB888)
+* 2 display layers with dedicated FIFO (64x32 bit)
+* Color Look Up Table (CLUT) upto 256 color (256x24-bit) per layer
+* Supports XGA (1024x768) resolution
+* Programmable timings for different display panels
+* Programmable Background colors
+* Programmable Polarity for HSync, VSyc, and Data Enable
+* Upto 8 Input color formats selectable per layer
+  * ARGB8888
+  * RGB888
+  * RGB565
+  * ARGB1555
+  * ARGB4444
+  * L8 (8-bit Luminance or CLUT)
+  * AL44 (4-bit alpha + 4-bit Luminance)
+  * AL88 (8-bit alpha + 8-bit Luminance)
+* Pseudo-random dithering output for low bits per channel.
+  * Dither width 2 bits for Red, Green and Blue
+* Flexible blending between two layers using alpha value (per pixel or constant)
+* Color Keying (Transparency Color)
+* Programmable Window position and size
+* Support thin film transitor (TFT) color displays
+* AHB master interface with burst of 16 words
+* Upto 4 programmable interrupt events
+
+
 ### Display Interface Types
 * MIPI DPI (Display Pixel Interface)
 * MIPI DBI (Display Bus Interface/MCU Interface)
@@ -210,4 +237,29 @@ The above display interfaces are standarized by MIPI which stands for Mobile Ind
 * This display modules samples these data lines only when `DE=1` during the rising edge of the DOTCLK.
 * Note that the display does not need to support the 24 data lines to accept RGB data. We have to check the display module's pin capability while interfacing.
 
+![LCT TFT Synchronization Timings](Documentation/LCD_TFT_Synchronous_Timings.PNG)  
+
+In the datasheet of the ILI9341 the following table is given which is really important to program the LTDC of the micro-controller.  
+
+| Parameters                 | Symbol  | Min. | Typ. | Max. | Units  |
+| -------------------------- | ------- | ---- | ---- | ---- | ------ |
+| Horizontal Synchronization | Hsync   |  2   | 10   | 16   | DOTCLK |
+| Horizontal Back Porch      | HBP     |  2   | 20   | 24   | DOTCLK |
+| Horizontal Address         | HAdr    |  -   | 240  | -    | DOTCLK |
+| Horizontal Front Porch     | HFP     |  2   | 10   | 16   | DOTCLK |
+| Vertical Synchronization   | Vsync   |  1   | 2    | 4    | Line   |
+| Vertical Back Porch        | VBP     |  1   | 2    | -    | Line   |
+| Vertical Address           | VAdr    |  -   | 320  | -    | Line   |
+| Vertical Front Porch       | VFP     |  3   | 4    | -    | Line   |
+
+**Total Width (TW) = AW + HSW + HBP + HFP Pixels**  _AW is Active Width_  
+**Total Time Required to send on line (Tline) = (TW*Tdotclk) sec**   
+**Total Lines(TL) = AH + VSW +VBP + VFP lines**  _AH is Active Height_  
+**Total Time Required to Send 1 Frame (Tframe) = (TL*Tline)secs**  
+
+_DOTCLK = 6.25 MHz => Tdotclk = 0.16usec_  
+_TW = 320 + 10 + 20 + 10 => 360 pixels_  
+_TL = 240 + 2 + 2 + 4 => 248 lines_  
+_Tline = (TW * Tdotclk) = 360 * 0.16usec => 57.6 usec_  
+_Tframe = (TL * Tline) = 248 * 57.6 usec => 14.3 msec_  
 
