@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include "project_refs.h"
 #include "stm32f429xx.h"
+#include "bsp_lcd.h"
 
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
@@ -30,6 +31,8 @@ int main(void)
 {
   // Setup Clock
   SystemClock_Setup();
+  // Initialize LCD
+  BSP_LCD_Init();
 
 	for(;;);
 }
@@ -66,13 +69,18 @@ void SystemClock_Setup( void )
   // Setup the main clock
   REG_SET_VAL( pRCC->PLLCFGR, 0x08, 0x03F, RCC_PLLCFGR_PLLM_Pos );    		// PLL_M
   REG_SET_VAL( pRCC->PLLCFGR, 180u, 0x1FF, RCC_PLLCFGR_PLLN_Pos );    		// PLL_N
-  REG_SET_VAL( pRCC->PLLCFGR, 0x00, 0x003, RCC_PLLCFGR_PLLP_Pos );    		// PLL_P
+  REG_SET_VAL( pRCC->PLLCFGR, 0x00, 0x03,  RCC_PLLCFGR_PLLP_Pos );    		// PLL_P
 
   // Enable DOTCLK (Required only when using the RGB Interface)
   REG_SET_VAL( pRCC->PLLSAICFGR, 50u, 0x1FF, RCC_PLLSAICFGR_PLLSAIN_Pos); // PLLSAI_N
   REG_SET_VAL( pRCC->PLLSAICFGR, 0x02, 0x07, RCC_PLLSAICFGR_PLLSAIR_Pos); // PLLSAI_R
   // LCD Clock 6.25MHz
-  REG_SET_VAL( pRCC->DCKCFGR, 0x08, 0x3, RCC_DCKCFGR_PLLSAIDIVR_Pos);     // DIV
+  REG_SET_VAL( pRCC->DCKCFGR, 0x02, 0x3, RCC_DCKCFGR_PLLSAIDIVR_Pos);     // DIV
+
+  SET_BIT( pRCC->CR, RCC_CR_PLLSAION_Pos );     // Enable PLLSAI
+  // Stay in loop until ready flag is set
+  while( !READ_BIT( pRCC->CR, RCC_CR_PLLI2SRDY_Pos) );
+
 
   // Setup AHB and APBx Clocks
   // There are three bus clocks, HCLK, PCLK1 and PCLK2
@@ -85,8 +93,7 @@ void SystemClock_Setup( void )
 
   // Turn on the PLL and wait for PLLCLK Ready
   SET_BIT( pRCC->CR, RCC_CR_PLLON_Pos );
-  // Stay in loop until ready flag is set
-  while( !READ_BIT( pRCC->CR, RCC_CR_PLLI2SRDY_Pos) );
+  while( !READ_BIT(pRCC->CR,RCC_CR_PLLRDY_Pos) );
 
   // Switch PLLCLK as SYSCLK
   REG_SET_VAL( pRCC->CFGR, 0x02, 0x03, RCC_CFGR_SW_Pos );
