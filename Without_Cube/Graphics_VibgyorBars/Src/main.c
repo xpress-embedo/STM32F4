@@ -79,8 +79,7 @@ void SystemClock_Setup( void )
 
   SET_BIT( pRCC->CR, RCC_CR_PLLSAION_Pos );     // Enable PLLSAI
   // Stay in loop until ready flag is set
-  while( !READ_BIT( pRCC->CR, RCC_CR_PLLI2SRDY_Pos) );
-
+  while( ! READ_BIT( pRCC->CR, RCC_CR_PLLSAIRDY_Pos) );
 
   // Setup AHB and APBx Clocks
   // There are three bus clocks, HCLK, PCLK1 and PCLK2
