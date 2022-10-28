@@ -26,6 +26,8 @@
 #endif
 
 void SystemClock_Setup( void );
+void LTDC_Pin_Init( void );
+void LTDC_Init( void );
 
 int main(void)
 {
@@ -33,10 +35,17 @@ int main(void)
   SystemClock_Setup();
   // Initialize LCD
   BSP_LCD_Init();
+  LTDC_Pin_Init();
+  LTDC_Init();
 
 	for(;;);
 }
 
+/**
+ * @brief Initializes the STM32 Clock, enable the PLL for system clock and also
+ *        for the LTDC which is done using PLLSAI
+ * @param  none
+ */
 void SystemClock_Setup( void )
 {
   /*---First Step is to Setup the main system clock SYSCLK, we will configure
@@ -97,6 +106,78 @@ void SystemClock_Setup( void )
   // Switch PLLCLK as SYSCLK
   REG_SET_VAL( pRCC->CFGR, 0x02, 0x03, RCC_CFGR_SW_Pos );
   while( !(REG_READ_VAL( pRCC->CFGR, 0x3, RCC_CFGR_SWS_Pos) == 0x02 ) );
+}
 
+/**
+ * @brief Initializes the GPIO's used for LTDC peripheral
+ * @param  none
+ */
+void LTDC_Pin_Init( void )
+{
+  uint32_t idx = 0;
+  RCC_TypeDef *pRCC = RCC;
 
+  // Enable the Peripheral Clocks for the GPIO Ports involved in LTDC Interface
+  SET_BIT( pRCC->AHB1ENR, RCC_AHB1ENR_GPIOAEN_Pos );
+  SET_BIT( pRCC->AHB1ENR, RCC_AHB1ENR_GPIOBEN_Pos );
+  SET_BIT( pRCC->AHB1ENR, RCC_AHB1ENR_GPIOCEN_Pos );
+  SET_BIT( pRCC->AHB1ENR, RCC_AHB1ENR_GPIODEN_Pos );
+  SET_BIT( pRCC->AHB1ENR, RCC_AHB1ENR_GPIOFEN_Pos );
+  SET_BIT( pRCC->AHB1ENR, RCC_AHB1ENR_GPIOGEN_Pos );
+
+  for( idx=0; idx<total_ltdc_pins; idx++ )
+  {
+    REG_SET_VAL( ltdc_io_ports[idx]->MODER, 0x02, 0x03, (ltdc_pins[idx]*2u) );    // Alternate Function Mode
+    CLR_BIT( ltdc_io_ports[idx]->OTYPER, ltdc_pins[idx] );                        // Output Type
+    REG_SET_VAL( ltdc_io_ports[idx]->OSPEEDR, 0x02, 0x03, (ltdc_pins[idx]*2u) );  // Speed
+    if( ltdc_pins[idx] < 8u )
+    {
+      REG_SET_VAL( ltdc_io_ports[idx]->AFR[0], 14u, 0x0F, (ltdc_pins[idx]*4u) );  // Alternate Function LTDC
+    }
+    else
+    {
+      REG_SET_VAL( ltdc_io_ports[idx]->AFR[1], 14u, 0x0F, ((ltdc_pins[idx]%8)*4u) );  // Alternate Function LTDC
+    }
+  }
+}
+
+void LTDC_Init( void )
+{
+  RCC_TypeDef *pRCC = RCC;
+  LTDC_TypeDef *pLTDC = LTDC;
+  uint32_t width = 0u;
+  uint32_t height = 0u;
+
+  // Enable the Peripheral Clock for the LTDC, and that can be done in APB2
+  SET_BIT( pRCC->APB2ENR, RCC_APB2ENR_LTDCEN_Pos );
+
+  // Horizontal Configurations
+  REG_SET_VAL( pLTDC->SSCR, (BSP_LCD_HSW - 1u), 0xFFF, LTDC_SSCR_HSW_Pos );                   // Horizontal Synchronization Size Configuration
+  REG_SET_VAL( pLTDC->BPCR, (BSP_LCD_HSW + BSP_LCD_HBP - 1u), 0xFFF, LTDC_BPCR_AHBP_Pos );    // Back Porch Configuration
+  
+  width = (BSP_LCD_HSW + BSP_LCD_HBP + BSP_LCD_ACTIVE_WIDTH - 1u);
+  REG_SET_VAL( pLTDC->AWCR, width, 0xFFF, LTDC_AWCR_AAW_Pos );                                // Active Width Configuration
+
+  width = (BSP_LCD_HSW + BSP_LCD_HBP + BSP_LCD_ACTIVE_WIDTH + BSP_LCD_HFP - 1u);
+  REG_SET_VAL( pLTDC->TWCR, width, 0xFFF, LTDC_TWCR_TOTALW_Pos );                             // Total Width Configuration
+
+  // Vertical Configurations
+  REG_SET_VAL( pLTDC->SSCR, (BSP_LCD_VSW - 1u), 0x7FF, LTDC_SSCR_VSH_Pos );                   // Vertical Synchronization Size Configuration
+  REG_SET_VAL( pLTDC->BPCR, (BSP_LCD_VSW + BSP_LCD_VBP - 1u), 0x7FF, LTDC_BPCR_AVBP_Pos );    // Back Porch Configuration
+  
+  height = (BSP_LCD_VSW + BSP_LCD_VBP + BSP_LCD_ACTIVE_HEIGHT - 1u);
+  REG_SET_VAL( pLTDC->AWCR, height, 0x7FF, LTDC_AWCR_AAH_Pos );                               // Active Height Configuration
+
+  width = (BSP_LCD_VSW + BSP_LCD_VBP + BSP_LCD_ACTIVE_HEIGHT + BSP_LCD_VFP - 1u);
+  REG_SET_VAL( pLTDC->TWCR, height, 0xFFF, LTDC_TWCR_TOTALW_Pos );                            // Total Height Configuration
+
+  // Configure the Background Color
+  // REG_SET_VAL( pLTDC->BCCR, 0xFF, 0xFF, LTDC_BCCR_BCRED_Pos );
+  REG_SET_VAL( pLTDC->BCCR, 0x0000FFU, 0xFFFFFF , LTDC_BCCR_BCBLUE_Pos);
+
+  // Default Polarity for Hsync, Vsync, LTDC CLK, DE
+  // TODO: XS
+
+  // Enable the LTDC peripheral
+  SET_BIT( pLTDC->GCR, LTDC_GCR_LTDCEN_Pos );
 }

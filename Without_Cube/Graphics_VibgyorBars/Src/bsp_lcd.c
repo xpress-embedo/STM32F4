@@ -5,27 +5,8 @@
  *      Author: xpress_embedo
  */
 
-#include "project_refs.h"
 #include "bsp_lcd.h"
-#include "stm32f429xx.h"
 #include "ili9341_reg.h"
-
-#define GPIO_PIN_0						      (0u)
-#define GPIO_PIN_1                  (1u)
-#define GPIO_PIN_2                  (2u)
-#define GPIO_PIN_3                  (3u)
-#define GPIO_PIN_4                  (4u)
-#define GPIO_PIN_5                  (5u)
-#define GPIO_PIN_6                  (6u)
-#define GPIO_PIN_7                  (7u)
-#define GPIO_PIN_8                  (8u)
-#define GPIO_PIN_9                  (9u)
-#define GPIO_PIN_10                 (10u)
-#define GPIO_PIN_11                 (11u)
-#define GPIO_PIN_12                 (12u)
-#define GPIO_PIN_13                 (13u)
-#define GPIO_PIN_14                 (14u)
-#define GPIO_PIN_15                 (15u)
 
 // #ifdef STM32F429ZITx this can also be used
 #ifdef STM32F429I_DISC1
@@ -70,7 +51,59 @@
 #define LCD_DCX_HIGH()            SET_BIT( LCD_DCX_PORT->ODR, LCD_DCX_PIN )
 #define LCD_DCX_LOW()             CLR_BIT( LCD_DCX_PORT->ODR, LCD_DCX_PIN )
 
+GPIO_TypeDef *ltdc_io_ports[] =
+{
+  LCD_DATA_R2_PORT,
+  LCD_DATA_R3_PORT,
+  LCD_DATA_R4_PORT,
+  LCD_DATA_R5_PORT,
+  LCD_DATA_R6_PORT,
+  LCD_DATA_R7_PORT,
 
+  LCD_DATA_G2_PORT,
+  LCD_DATA_G3_PORT,
+  LCD_DATA_G4_PORT,
+  LCD_DATA_G5_PORT,
+  LCD_DATA_G6_PORT,
+  LCD_DATA_G7_PORT,
+
+  LCD_DATA_B2_PORT,
+  LCD_DATA_B3_PORT,
+  LCD_DATA_B4_PORT,
+  LCD_DATA_B5_PORT,
+  LCD_DATA_B6_PORT,
+  LCD_DATA_B7_PORT
+};
+
+const uint8_t ltdc_pins[] =
+{
+  LCD_DATA_R2_PIN,
+  LCD_DATA_R3_PIN,
+  LCD_DATA_R4_PIN,
+  LCD_DATA_R5_PIN,
+  LCD_DATA_R6_PIN,
+  LCD_DATA_R7_PIN,
+
+  LCD_DATA_G2_PIN,
+  LCD_DATA_G3_PIN,
+  LCD_DATA_G4_PIN,
+  LCD_DATA_G5_PIN,
+  LCD_DATA_G6_PIN,
+  LCD_DATA_G7_PIN,
+
+  LCD_DATA_B2_PIN,
+  LCD_DATA_B3_PIN,
+  LCD_DATA_B4_PIN,
+  LCD_DATA_B5_PIN,
+  LCD_DATA_B6_PIN,
+  LCD_DATA_B7_PIN
+};
+
+#define LCD_TOTAL_PINS      (sizeof(ltdc_pins)/sizeof(ltdc_pins[0]))
+
+const uint8_t total_ltdc_pins = LCD_TOTAL_PINS;
+
+/*--------------------------- Static Functions -------------------------------*/
 static void delay( void );
 static void LCD_Pin_Init( void );
 static void LCD_SPI_Init( void );
@@ -173,6 +206,7 @@ static void LCD_SPI_Init( void )
   SET_BIT( pSPI->CR1, SPI_CR1_MSTR_Pos );       // Controller Mode
   SET_BIT( pSPI->CR1, SPI_CR1_BIDIMODE_Pos );   // Half-Duplex Mode
   SET_BIT( pSPI->CR1, SPI_CR1_BIDIOE_Pos );     // Transmit only (Output Enable in Bi-Directional Mode)
+  SET_BIT( pSPI->CR1, SPI_CR1_BIDIOE_Pos );     // Transmit only (Output Enable in Bi-Directional Mode)
   CLR_BIT( pSPI->CR1, SPI_CR1_DFF_Pos );        // DFF = 8 bits
   SET_BIT( pSPI->CR1, SPI_CR1_SSM_Pos );        // Software Slave Management is enabled, no control via SPI HW module
   SET_BIT( pSPI->CR1, SPI_CR1_SSI_Pos );
@@ -185,6 +219,8 @@ static void LCD_SPI_Init( void )
   // But for LCD the clock should be around 6MHz, so we have to select the
   // setting fpclk/16 = 90/16 = 5.625MHz
   REG_SET_VAL( pSPI->CR1, 0x03, 0x07, SPI_CR1_BR_Pos );   // SPI Clock 90MHz/16 = 5.625MHz
+  // REG_SET_VAL( pSPI->CR1, 0x06, 0x07, SPI_CR1_BR_Pos );   // SPI Clock 90MHz/128 = 0.70MHz
+  // REG_SET_VAL( pSPI->CR1, 0x7U, 0x7U, SPI_CR1_BR_Pos );   // SPI clck = 90MHz/256 ==> 0.35 MHz
 
   CLR_BIT( pSPI->CR1, SPI_CR1_CPOL_Pos );       // CPOL = 0
   CLR_BIT( pSPI->CR1, SPI_CR1_CPHA_Pos );       // CPHA = 0
@@ -197,6 +233,7 @@ static void LCD_Reset( void )
 {
   LCD_RESX_LOW();
   delay();      // Small software delay
+  delay();
   LCD_RESX_HIGH();
   delay();
 }
@@ -208,10 +245,136 @@ static void LCD_Config( void )
 
   LCD_Write_Cmd(ILI9341_SWRESET);
   LCD_Write_Cmd(ILI9341_POWERB);
+//  LCD_Write_Cmd( 0xAA );
+//  LCD_Write_Cmd( 0x55 );
+//  while(1);
   params[0] = 0x00;
   params[1] = 0xD9;
   params[2] = 0x30;
   LCD_Write_Data(params, 3);
+
+  LCD_Write_Cmd(ILI9341_POWER_SEQ);
+  params[0]= 0x64;
+  params[1]= 0x03;
+  params[2]= 0X12;
+  params[3]= 0X81;
+  LCD_Write_Data(params, 4);
+
+  LCD_Write_Cmd(ILI9341_DTCA);
+  params[0]= 0x85;
+  params[1]= 0x10;
+  params[2]= 0x7A;
+  LCD_Write_Data(params, 3);
+
+  LCD_Write_Cmd(ILI9341_POWERA);
+  params[0]= 0x39;
+  params[1]= 0x2C;
+  params[2]= 0x00;
+  params[3]= 0x34;
+  params[4]= 0x02;
+  LCD_Write_Data(params, 5);
+
+  LCD_Write_Cmd(ILI9341_PRC);
+  params[0]= 0x20;
+  LCD_Write_Data(params, 1);
+
+  LCD_Write_Cmd(ILI9341_DTCB);
+  params[0]= 0x00;
+  params[1]= 0x00;
+  LCD_Write_Data(params, 2);
+
+  LCD_Write_Cmd(ILI9341_POWER1);
+  params[0]= 0x1B;
+  LCD_Write_Data(params, 1);
+
+  LCD_Write_Cmd(ILI9341_POWER2);
+  params[0]= 0x12;
+  LCD_Write_Data(params, 1);
+
+  LCD_Write_Cmd(ILI9341_VCOM1);
+  params[0]= 0x08;
+  params[1]= 0x26;
+  LCD_Write_Data(params, 2);
+
+  LCD_Write_Cmd(ILI9341_VCOM2);
+  params[0]= 0XB7;
+  LCD_Write_Data(params, 1);
+
+
+  LCD_Write_Cmd(ILI9341_PIXEL_FORMAT);
+  params[0]= 0x55; //select RGB565
+  LCD_Write_Data(params, 1);
+
+  LCD_Write_Cmd(ILI9341_FRMCTR1);
+  params[0]= 0x00;
+  params[1]= 0x1B;//frame rate = 70
+  LCD_Write_Data(params, 2);
+
+  LCD_Write_Cmd(ILI9341_DFC);    // Display Function Control
+  params[0]= 0x0A;
+  params[1]= 0xA2;
+  LCD_Write_Data(params, 2);
+
+  LCD_Write_Cmd(ILI9341_3GAMMA_EN);    // 3Gamma Function Disable
+  params[0]= 0x02;
+  LCD_Write_Data(params, 1);
+
+  LCD_Write_Cmd(ILI9341_GAMMA);
+  params[0]= 0x01;
+  LCD_Write_Data(params, 1);
+
+  LCD_Write_Cmd(ILI9341_PGAMMA);    //Set Gamma
+  params[0]= 0x0F;
+  params[1]= 0x1D;
+  params[2]= 0x1A;
+  params[3]= 0x0A;
+  params[4]= 0x0D;
+  params[5]= 0x07;
+  params[6]= 0x49;
+  params[7]= 0X66;
+  params[8]= 0x3B;
+  params[9]= 0x07;
+  params[10]= 0x11;
+  params[11]= 0x01;
+  params[12]= 0x09;
+  params[13]= 0x05;
+  params[14]= 0x04;
+  LCD_Write_Data(params, 15);
+
+  LCD_Write_Cmd(ILI9341_NGAMMA);
+  params[0]= 0x00;
+  params[1]= 0x18;
+  params[2]= 0x1D;
+  params[3]= 0x02;
+  params[4]= 0x0F;
+  params[5]= 0x04;
+  params[6]= 0x36;
+  params[7]= 0x13;
+  params[8]= 0x4C;
+  params[9]= 0x07;
+  params[10]= 0x13;
+  params[11]= 0x0F;
+  params[12]= 0x2E;
+  params[13]= 0x2F;
+  params[14]= 0x05;
+  LCD_Write_Data(params, 15);
+
+  LCD_Write_Cmd(ILI9341_RGB_INTERFACE);
+  params[0] = 0xC2; //Data is fetched during falling edge of DOTCLK
+  LCD_Write_Data(params, 1);
+
+  LCD_Write_Cmd(ILI9341_INTERFACE);
+  params[0] = 0x00;
+  params[1] = 0x00;
+  params[2] = 0x06;
+  LCD_Write_Data(params, 3);
+
+  LCD_Write_Cmd(ILI9341_SLEEP_OUT); //Exit Sleep
+  delay();
+  delay();
+  LCD_Write_Cmd(ILI9341_DISPLAY_ON); //display on
+  delay();
+  delay();
 }
 
 static void LCD_Write_Cmd( uint8_t cmd )
@@ -244,18 +407,15 @@ static void LCD_Write_Data( uint8_t *buffer, uint8_t length )
   SPI_TypeDef *pSPI = SPI;
   uint8_t idx = 0;
 
-  LCD_CSX_LOW();
-  LCD_DCX_HIGH();
-
-  while( length-- )
+  for( idx=0; idx<length; idx++ )
   {
+    LCD_CSX_LOW();
     while( !READ_BIT(pSPI->SR, SPI_SR_TXE_Pos ) );
     while( !READ_BIT(pSPI->SR, SPI_SR_TXE_Pos ) );
     SET_VALUE( pSPI->DR, buffer[idx] );
     while( READ_BIT( pSPI->SR, SPI_SR_BSY_Pos ) );
+    LCD_CSX_HIGH();
   }
-  LCD_DCX_HIGH();
-  LCD_CSX_HIGH();
 }
 
 static void delay( void )
