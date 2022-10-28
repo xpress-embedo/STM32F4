@@ -168,7 +168,7 @@ void LTDC_Init( void )
   height = (BSP_LCD_VSW + BSP_LCD_VBP + BSP_LCD_ACTIVE_HEIGHT - 1u);
   REG_SET_VAL( pLTDC->AWCR, height, 0x7FF, LTDC_AWCR_AAH_Pos );                               // Active Height Configuration
 
-  width = (BSP_LCD_VSW + BSP_LCD_VBP + BSP_LCD_ACTIVE_HEIGHT + BSP_LCD_VFP - 1u);
+  height = (BSP_LCD_VSW + BSP_LCD_VBP + BSP_LCD_ACTIVE_HEIGHT + BSP_LCD_VFP - 1u);
   REG_SET_VAL( pLTDC->TWCR, height, 0xFFF, LTDC_TWCR_TOTALH_Pos );                            // Total Height Configuration
 
   // Configure the Background Color
