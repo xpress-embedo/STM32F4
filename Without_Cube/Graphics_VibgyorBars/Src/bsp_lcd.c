@@ -72,7 +72,12 @@ GPIO_TypeDef *ltdc_io_ports[] =
   LCD_DATA_B4_PORT,
   LCD_DATA_B5_PORT,
   LCD_DATA_B6_PORT,
-  LCD_DATA_B7_PORT
+  LCD_DATA_B7_PORT,
+
+  LCD_HSYNC_PORT,
+  LCD_VSYNC_PORT,
+  LCD_DE_PORT,
+  LCD_DOTCLK_PORT,
 };
 
 const uint8_t ltdc_pins[] =
@@ -96,7 +101,12 @@ const uint8_t ltdc_pins[] =
   LCD_DATA_B4_PIN,
   LCD_DATA_B5_PIN,
   LCD_DATA_B6_PIN,
-  LCD_DATA_B7_PIN
+  LCD_DATA_B7_PIN,
+
+  LCD_HSYNC_PIN,
+  LCD_VSYNC_PIN,
+  LCD_DE_PIN,
+  LCD_DOTCLK_PIN,
 };
 
 #define LCD_TOTAL_PINS      (sizeof(ltdc_pins)/sizeof(ltdc_pins[0]))

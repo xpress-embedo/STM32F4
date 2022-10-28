@@ -169,11 +169,11 @@ void LTDC_Init( void )
   REG_SET_VAL( pLTDC->AWCR, height, 0x7FF, LTDC_AWCR_AAH_Pos );                               // Active Height Configuration
 
   width = (BSP_LCD_VSW + BSP_LCD_VBP + BSP_LCD_ACTIVE_HEIGHT + BSP_LCD_VFP - 1u);
-  REG_SET_VAL( pLTDC->TWCR, height, 0xFFF, LTDC_TWCR_TOTALW_Pos );                            // Total Height Configuration
+  REG_SET_VAL( pLTDC->TWCR, height, 0xFFF, LTDC_TWCR_TOTALH_Pos );                            // Total Height Configuration
 
   // Configure the Background Color
-  // REG_SET_VAL( pLTDC->BCCR, 0xFF, 0xFF, LTDC_BCCR_BCRED_Pos );
-  REG_SET_VAL( pLTDC->BCCR, 0x0000FFU, 0xFFFFFF , LTDC_BCCR_BCBLUE_Pos);
+  REG_SET_VAL( pLTDC->BCCR, 0xFF, 0xFF, LTDC_BCCR_BCRED_Pos );
+  // REG_SET_VAL( pLTDC->BCCR, 0x0000FFU, 0xFFFFFF , LTDC_BCCR_BCBLUE_Pos);
 
   // Default Polarity for Hsync, Vsync, LTDC CLK, DE
   // TODO: XS

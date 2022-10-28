@@ -19,9 +19,9 @@
 #define BSP_LCD_HBP                 (20u)   // Horizontal Back Porch
 #define BSP_LCD_HFP                 (10u)   // Horizontal Front Porch
 
-#define BSP_LCD_VSW                 (10u)   // Vertical Synch Width
-#define BSP_LCD_VBP                 (20u)   // Vertical Back Porch
-#define BSP_LCD_VFP                 (20u)   // Vertical Front Porch
+#define BSP_LCD_VSW                 (2u)    // Vertical Synch Width
+#define BSP_LCD_VBP                 (2u)    // Vertical Back Porch
+#define BSP_LCD_VFP                 (4u)    // Vertical Front Porch
 
 #if (ORIENTATION == LANSCAPE )
 #define BSP_LCD_ACTIVE_WIDTH        (240u)
@@ -71,10 +71,10 @@
 #define LCD_DATA_B6_PIN             GPIO_PIN_8
 #define LCD_DATA_B7_PIN             GPIO_PIN_9
 
-#define LCD_HYSNC_PIN               GPIO_PIN_6
+#define LCD_HSYNC_PIN               GPIO_PIN_6
 #define LCD_VSYNC_PIN               GPIO_PIN_4
-#define LCD_DE                      GPIO_PIN_10
-#define LCD_DOTCLK                  GPIO_PIN_7
+#define LCD_DE_PIN                  GPIO_PIN_10
+#define LCD_DOTCLK_PIN              GPIO_PIN_7
 
 #define LCD_DATA_R2_PORT            GPIOC
 #define LCD_DATA_R3_PORT            GPIOB
@@ -97,7 +97,7 @@
 #define LCD_DATA_B6_PORT            GPIOB
 #define LCD_DATA_B7_PORT            GPIOB
 
-#define LCD_HYSNC_PORT              GPIOC
+#define LCD_HSYNC_PORT              GPIOC
 #define LCD_VSYNC_PORT              GPIOA
 #define LCD_DE_PORT                 GPIOF
 #define LCD_DOTCLK_PORT             GPIOG
