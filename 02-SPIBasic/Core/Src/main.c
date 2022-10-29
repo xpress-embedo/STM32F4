@@ -65,7 +65,7 @@ static void MX_SPI5_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  uint8_t data[10] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x55, 0x00 };
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -88,7 +88,11 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI5_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_GPIO_WritePin( SPI_ENABLE_GPIO_Port, SPI_ENABLE_Pin, GPIO_PIN_SET );
+  HAL_Delay(100);
+  HAL_GPIO_WritePin( SPI_ENABLE_GPIO_Port, SPI_ENABLE_Pin, GPIO_PIN_RESET );
+  HAL_SPI_Transmit( &hspi5, data, 10u, 300u );
+  HAL_GPIO_WritePin( SPI_ENABLE_GPIO_Port, SPI_ENABLE_Pin, GPIO_PIN_SET );
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -98,6 +102,12 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    HAL_GPIO_WritePin( LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET );
+    HAL_GPIO_WritePin( LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET );
+    HAL_Delay( 1000 );
+    HAL_GPIO_WritePin( LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET );
+    HAL_GPIO_WritePin( LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET );
+    HAL_Delay( 1000 );
   }
   /* USER CODE END 3 */
 }
