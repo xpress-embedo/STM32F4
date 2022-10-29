@@ -36,7 +36,7 @@ int main(void)
   LTDC_Pin_Init();
   LTDC_Init();
 
-	for(;;);
+  for(;;);
 }
 
 /**
@@ -170,8 +170,9 @@ void LTDC_Init( void )
   REG_SET_VAL( pLTDC->TWCR, height, 0xFFF, LTDC_TWCR_TOTALH_Pos );                            // Total Height Configuration
 
   // Configure the Background Color
-  REG_SET_VAL( pLTDC->BCCR, 0xFF, 0xFF, LTDC_BCCR_BCRED_Pos );
-  // REG_SET_VAL( pLTDC->BCCR, 0x0000FFU, 0xFFFFFF , LTDC_BCCR_BCBLUE_Pos);
+  // REG_SET_VAL( pLTDC->BCCR, 0xFF0000, 0xFFFFFF , LTDC_BCCR_BCBLUE_Pos);     // Expectation RED Comes Blue
+  // REG_SET_VAL( pLTDC->BCCR, 0x00FF00, 0xFFFFFF , LTDC_BCCR_BCBLUE_Pos);     // Expectation Green Comes Green
+  REG_SET_VAL( pLTDC->BCCR, 0x0000FF, 0xFFFFFF , LTDC_BCCR_BCBLUE_Pos);     // Expectation Blue Comes Red
 
   // Default Polarity for Hsync, Vsync, LTDC CLK, DE
   // TODO: XS

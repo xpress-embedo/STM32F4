@@ -187,6 +187,16 @@ Let's say we selected RGB565 pixel format, RGB565 1pixel consumes 2 bytes and he
 * AHB master interface with burst of 16 words
 * Upto 4 programmable interrupt events
 
+### LTDC Layers
+* LTDC Supports 2 Layers
+* We can activate either of the layers or all layers as per the application requirement.
+* Programmable default color settings for each layer.
+* Programmable frame buffer address settings for each layer.
+* Flexible blending options (Constant and Pixel Alpha Blending)
+* Programmable window positioning for each layer
+* Most LTDC layer registers are shadow registers, and you need to activate loading shadow values to real register explicitly.
+
+
 
 ### Display Interface Types
 * MIPI DPI (Display Pixel Interface)

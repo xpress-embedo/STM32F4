@@ -6,6 +6,7 @@
  */
 
 #include "bsp_lcd.h"
+#include "board.h"
 #include "ili9341_reg.h"
 
 // #ifdef STM32F429ZITx this can also be used
@@ -229,6 +230,8 @@ static void LCD_SPI_Init( void )
   // But for LCD the clock should be around 6MHz, so we have to select the
   // setting fpclk/16 = 90/16 = 5.625MHz
   REG_SET_VAL( pSPI->CR1, 0x03, 0x07, SPI_CR1_BR_Pos );   // SPI Clock 90MHz/16 = 5.625MHz
+  // REG_SET_VAL( pSPI->CR1, 0x04, 0x07, SPI_CR1_BR_Pos );   // SPI Clock 90MHz/32 = 2.812MHz
+  // REG_SET_VAL( pSPI->CR1, 0x05, 0x07, SPI_CR1_BR_Pos );   // SPI Clock 90MHz/64 = 1.40MHz
   // REG_SET_VAL( pSPI->CR1, 0x06, 0x07, SPI_CR1_BR_Pos );   // SPI Clock 90MHz/128 = 0.70MHz
   // REG_SET_VAL( pSPI->CR1, 0x7U, 0x7U, SPI_CR1_BR_Pos );   // SPI clck = 90MHz/256 ==> 0.35 MHz
 
