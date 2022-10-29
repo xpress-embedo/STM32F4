@@ -31,9 +31,7 @@ void LTDC_Init( void );
 
 int main(void)
 {
-  // Setup Clock
   SystemClock_Setup();
-  // Initialize LCD
   BSP_LCD_Init();
   LTDC_Pin_Init();
   LTDC_Init();
@@ -136,7 +134,7 @@ void LTDC_Pin_Init( void )
     }
     else
     {
-      REG_SET_VAL( ltdc_io_ports[idx]->AFR[1], 14u, 0x0F, ((ltdc_pins[idx]%8)*4u) );  // Alternate Function LTDC
+      REG_SET_VAL( ltdc_io_ports[idx]->AFR[1], 14u, 0x0F, ( (ltdc_pins[idx] % 8u)*4u) );  // Alternate Function LTDC
     }
   }
 }

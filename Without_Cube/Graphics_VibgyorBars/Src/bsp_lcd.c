@@ -121,7 +121,7 @@ static void LCD_Reset( void );
 static void LCD_Config( void );
 static void LCD_SPI_Enable( void );
 static void LCD_Write_Cmd( uint8_t cmd );
-static void LCD_Write_Data( uint8_t *buffer, uint8_t length );
+static void LCD_Write_Data( uint8_t *buffer, uint32_t length );
 
 
 /**
@@ -412,17 +412,17 @@ static void LCD_Write_Cmd( uint8_t cmd )
   LCD_CSX_HIGH();
 }
 
-static void LCD_Write_Data( uint8_t *buffer, uint8_t length )
+static void LCD_Write_Data( uint8_t *buffer, uint32_t length )
 {
   SPI_TypeDef *pSPI = SPI;
-  uint8_t idx = 0;
+  uint32_t idx = 0;
 
   for( idx=0; idx<length; idx++ )
   {
     LCD_CSX_LOW();
     while( !READ_BIT(pSPI->SR, SPI_SR_TXE_Pos ) );
-    while( !READ_BIT(pSPI->SR, SPI_SR_TXE_Pos ) );
     SET_VALUE( pSPI->DR, buffer[idx] );
+    while( !READ_BIT(pSPI->SR, SPI_SR_TXE_Pos ) );
     while( READ_BIT( pSPI->SR, SPI_SR_BSY_Pos ) );
     LCD_CSX_HIGH();
   }
