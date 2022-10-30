@@ -89,7 +89,7 @@ void bsp_lcd_set_fb_background_color_rgb666(uint32_t color_24bit)
 #endif
 
 
-void bsp_lcd_fill_rect(uint32_t rgb888, uint32_t x_start, uint32_t x_width,uint32_t y_start,uint32_t y_width)
+void BSP_LCD_Fill_Rectangle( uint32_t rgb888, uint32_t x_start, uint32_t x_width,uint32_t y_start,uint32_t y_width )
 {
   void *fb_ptr;
 

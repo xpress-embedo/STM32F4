@@ -36,7 +36,20 @@ int main(void)
   LTDC_Pin_Init();
   LTDC_Init();
   LTDC_Layer_Init( LTDC_Layer1 );
-  BSP_LCD_SetFrameBuffer_BackGroundColor( GREEN );
+  BSP_LCD_SetFrameBuffer_BackGroundColor( BLACK );
+  #if (BSP_LCD_ORIENTATION == PORTRAIT )
+  // our VIBGYOR colors are 7 colors, and let's say we wanted to display these
+  // colors horizontally in portrait orientation, then size of one rectange is
+  // width = 240u and height = 320u/7u = 46u
+  BSP_LCD_Fill_Rectangle( VIOLET, 0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*0u, 46u );
+  BSP_LCD_Fill_Rectangle( INDIGO, 0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*1u, 46u );
+  BSP_LCD_Fill_Rectangle( BLUE,   0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*2u, 46u );
+  BSP_LCD_Fill_Rectangle( GREEN,  0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*3u, 46u );
+  BSP_LCD_Fill_Rectangle( YELLOW, 0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*4u, 46u );
+  BSP_LCD_Fill_Rectangle( ORANGE, 0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*5u, 46u );
+  BSP_LCD_Fill_Rectangle( RED,    0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*6u, 46u );
+  #elif( BSP_LCD_ORIENTATION == LANDSCAPE )
+  #endif
   for(;;);
 }
 
