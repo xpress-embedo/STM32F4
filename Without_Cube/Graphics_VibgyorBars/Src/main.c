@@ -269,7 +269,7 @@ void LTDC_Layer_Init( LTDC_Layer_TypeDef *pLayer )
   SET_VALUE( pLayer->CFBAR, BSP_LCD_Get_FB_Address() );
 
   // Configure the default color of the layer (optional, black is default)
-  // TODO: XS
+  SET_VALUE( pLayer->DCCR, YELLOW );
 
   // Configure pitch, line length and line numbers
   temp = 0u;
