@@ -6,8 +6,6 @@
  */
 
 #include "bsp_lcd.h"
-#include "board.h"
-#include "ili9341_reg.h"
 
 // #ifdef STM32F429ZITx this can also be used
 #ifdef STM32F429I_DISC1

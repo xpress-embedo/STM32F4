@@ -18,7 +18,6 @@
 
 #include <stdint.h>
 #include "project_refs.h"
-#include "stm32f429xx.h"
 #include "bsp_lcd.h"
 
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
@@ -28,6 +27,7 @@
 void SystemClock_Setup( void );
 void LTDC_Pin_Init( void );
 void LTDC_Init( void );
+void LTDC_Layer_Init( LTDC_Layer_TypeDef *pLayer );
 
 int main(void)
 {
@@ -35,7 +35,8 @@ int main(void)
   BSP_LCD_Init();
   LTDC_Pin_Init();
   LTDC_Init();
-
+  LTDC_Layer_Init( LTDC_Layer1 );
+  BSP_LCD_SetFrameBuffer_BackGroundColor( GREEN );
   for(;;);
 }
 
@@ -179,4 +180,111 @@ void LTDC_Init( void )
 
   // Enable the LTDC peripheral
   SET_BIT( pLTDC->GCR, LTDC_GCR_LTDCEN_Pos );
+}
+
+void LTDC_Layer_Init( LTDC_Layer_TypeDef *pLayer )
+{
+  LTDC_TypeDef *pLTDC = LTDC;
+  uint32_t temp = 0u;
+  
+  // Configure the pixel format of the layers frame buffer
+  REG_SET_VAL( pLayer->PFCR, 0x2, 0x7, LTDC_LxPFCR_PF_Pos );        // Pixel format RGB565 is selected
+
+  // Configure the constant alpha and blending factors
+  // This register defines the constant alpha value (divided by 255 by Hardware)
+  // , which is used in the alpha blending. Refer to LTDC_LxBFCR register.
+  // Example: if the programmed Constant Alpha is 0xFF, the Constant Alpha 
+  // value is 255/255=1, as in this case
+  REG_SET_VAL( pLayer->CACR, 255, 0xFF, LTDC_LxCACR_CONSTA_Pos );
+
+  // This register defines the blending factors F1 and F2.
+  // The general blending formula is: BC = BF1 x C + BF2 x Cs
+  // * BC = Blended color, BF1 = Blend Factor 1, C = Current layer color
+  // BF2 = Blend Factor 2, Cs = subjacent layers blended color
+  temp = 0u;
+  REG_SET_VAL( temp, 0x4, 0x7, LTDC_LxBFCR_BF1_Pos );     // Blending Factor 1 Constant Alpha is selected
+  REG_SET_VAL( temp, 0x5, 0x7, LTDC_LxBFCR_BF2_Pos );     // Blending Factor 2 Constant Alpha is selected
+  SET_VALUE( pLayer->BFCR, temp );
+
+  // Configure Layer Position (Windowing)
+  /*
+  NOTE:
+  AHBP => Accumulated Horizontal Back Porch width which includes the 
+  Horizontal Synchronization and Horizontal Back Porch Pixels Minus 1.
+  The Horizontal Back Porch is the period between Horizontal Synchronization
+  going inactive and the start of the active display part of the next scan line.
+  AAW => Accumulated Active Width (in units of pixel clock period)
+  These bits define the Accumulated Active Width which includes the Horizontal
+  Synchronization, Horizontal back porch and Active pixels minus 1.
+  The Active Width is the number of pixels in active display area of the panel 
+  scan line. The maximum Active Width supported is 0x400.
+
+  Window Horizontal Start Position (WHSTPOS) = AHBP + H-Start + 1
+  Window Horizontal Stop Position (WHSPPOS)  = AHBP + H-Start + LayerWidth + 1 <= (AAW)
+
+  AVBP => Accumulated Vertical back porch (in units of horizontal scan line)
+  These bits define the accumulated Vertical back porch width which includes the
+  Vertical Synchronization and Vertical back porch lines minus 1.
+  The Vertical back porch is the number of horizontal scan lines at a start of 
+  frame to the start of the first active scan line of the next frame.
+
+  AAH[10:0]: Accumulated Active Height (in units of horizontal scan line)
+  These bits define the Accumulated Height which includes the Vertical 
+  Synchronization, Vertical back porch and the Active Height lines minus 1. 
+  The Active Height is the number of active lines in the panel. 
+  The maximum Active Height supported is 0x300.
+
+  Window Vertical Start Position (WVSTPOS) = AVBP + V-Start + 1
+  Window Vertical Stop Position (WVSPPOS)  = AVBP + V-Start + LayerHeight + 1 <= (AAH)
+  */
+  temp = 0u;
+  // Get the value of AHBP and AVBP and AAH
+  uint32_t AHBP = REG_READ_VAL( pLTDC->BPCR, 0xFFF, LTDC_BPCR_AHBP_Pos );
+  uint32_t AAW  = REG_READ_VAL( pLTDC->AWCR, 0xFFF, LTDC_AWCR_AAW_Pos );
+  uint32_t AVBP = REG_READ_VAL( pLTDC->BPCR, 0xFFF, LTDC_BPCR_AVBP_Pos );
+  uint32_t AAH =  REG_READ_VAL (pLTDC->AWCR, 0x7FF, LTDC_AWCR_AAH_Pos );
+
+  // Will use H-Start as 0 and Layer Width as LCD Width
+  uint32_t WH_Start = AHBP + 0u + 1u;
+  uint32_t WH_Stop = AHBP + 0u + BSP_LCD_ACTIVE_WIDTH + 1u;
+  WH_Stop = (WH_Stop > AAW) ? AAW : WH_Stop;
+
+  REG_SET_VAL( temp, WH_Start, 0xFFF, LTDC_LxWHPCR_WHSTPOS_Pos );
+  REG_SET_VAL( temp, WH_Stop,  0xFFF, LTDC_LxWHPCR_WHSPPOS_Pos );
+  // we prepared the value in temp variable and writing it once only
+  // this is because WHPCR is a shadow register, and this will not update the
+  // real register, which will be done only when we set the immediate reload value
+  SET_VALUE( pLayer->WHPCR, temp );
+
+  temp = 0u;
+  // Will use V-Start as 0
+  uint32_t WV_Start = AVBP + 0u + 1u;
+  REG_SET_VAL( temp, WV_Start, 0x7FF, LTDC_LxWVPCR_WVSTPOS_Pos );
+  uint32_t WV_Stop =  AVBP + 0u + BSP_LCD_ACTIVE_HEIGHT + 1u;
+  WV_Stop = (WV_Stop > AAH) ? AAH : WV_Stop;
+  REG_SET_VAL( temp, WV_Stop, 0x7FF, LTDC_LxWVPCR_WVSPPOS_Pos );
+  SET_VALUE( pLayer->WVPCR, temp );
+
+  // Configure Frame Buffer Address
+  SET_VALUE( pLayer->CFBAR, BSP_LCD_Get_FB_Address() );
+
+  // Configure the default color of the layer (optional, black is default)
+  // TODO: XS
+
+  // Configure pitch, line length and line numbers
+  temp = 0u;
+  uint32_t pitch =  BSP_LTDC_LAYER_WIDTH * 2;
+  uint32_t line_len = pitch + 3;
+  REG_SET_VAL( temp, pitch, 0x1FFF, LTDC_LxCFBLR_CFBP_Pos) ;
+  REG_SET_VAL( temp, line_len, 0x1FFF, LTDC_LxCFBLR_CFBLL_Pos );
+  SET_VALUE( pLayer->CFBLR, temp );
+
+  REG_SET_VAL( pLayer->CFBLNR, BSP_LTDC_LAYER_HEIGHT, 0x7FF, LTDC_LxCFBLNR_CFBLNBR_Pos );
+
+  // Activate Immediate Reload (that means we want to store the values from the
+  // shadow register to the main registers)
+  SET_BIT( LTDC->SRCR, LTDC_SRCR_IMR );
+
+  // Enable the layer
+  SET_BIT( pLayer->CR, LTDC_LxCR_LEN_Pos );
 }
