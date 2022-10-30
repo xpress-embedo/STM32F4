@@ -7,6 +7,14 @@
 
 #include "bsp_lcd.h"
 
+#define MADCTL_MY           (0x80)        ///< Bottom to top
+#define MADCTL_MX           (0x40)        ///< Right to left
+#define MADCTL_MV           (0x20)        ///< Reverse Mode
+#define MADCTL_ML           (0x10)        ///< LCD refresh Bottom to top
+#define MADCTL_RGB          (0x00)        ///< Red-Green-Blue pixel order
+#define MADCTL_BGR          (0x08)        ///< Blue-Green-Red pixel order
+#define MADCTL_MH           (0x04)        ///< LCD refresh right to left
+
 // #ifdef STM32F429ZITx this can also be used
 #ifdef STM32F429I_DISC1
 // LCD Signals STM32F429 Discovery Board
@@ -256,9 +264,6 @@ static void LCD_Config( void )
 
   LCD_Write_Cmd(ILI9341_SWRESET);
   LCD_Write_Cmd(ILI9341_POWERB);
-//  LCD_Write_Cmd( 0xAA );
-//  LCD_Write_Cmd( 0x55 );
-//  while(1);
   params[0] = 0x00;
   params[1] = 0xD9;
   params[2] = 0x30;
@@ -386,6 +391,56 @@ static void LCD_Config( void )
   LCD_Write_Cmd(ILI9341_DISPLAY_ON); //display on
   delay();
   delay();
+}
+
+void BSP_LCD_Set_Orientation( uint8_t orientation )
+{
+  uint8_t param[4] = { 0 };
+
+  if( orientation == PORTRAIT )
+  {
+    LCD_Write_Cmd( ILI9341_RASET );   // Page Address Set
+    param[0] = 0x00;
+    param[1] = 0x00;
+    param[2] = 0x01;
+    param[3] = 0x40;                  // In Landscape Orientation we have 320 rows
+    LCD_Write_Data( param, 4u );
+
+    LCD_Write_Cmd( ILI9341_CASET );   // Column Address Set
+    param[0] = 0x00;
+    param[1] = 0x00;
+    param[2] = 0x00;
+    param[3] = 0xF0;                  // In Landscape Orientation we have 240 columns
+    LCD_Write_Data( param, 4u );
+
+    // Memory Access Control Portrait Orientation Settings
+    param[0] = MADCTL_MY | MADCTL_MX | MADCTL_BGR;
+  }
+  else if( orientation == LANDSCAPE )
+  {
+    LCD_Write_Cmd( ILI9341_RASET );   // Page Address Set
+    param[0] = 0x00;
+    param[1] = 0x00;
+    param[2] = 0x00;
+    param[3] = 0xF0;                  // In Landscape Orientation we have 240 rows
+    LCD_Write_Data( param, 4u );
+
+    LCD_Write_Cmd( ILI9341_CASET );   // Column Address Set
+    param[0] = 0x00;
+    param[1] = 0x00;
+    param[2] = 0x01;
+    param[3] = 0x40;                  // In Landscape Orientation we have 320 columns
+    LCD_Write_Data( param, 4u );
+
+    // Memory Access Control Landscape Orientation Settings
+    param[0] = MADCTL_MV | MADCTL_MY | MADCTL_BGR;
+  }
+  else
+  {
+    // do nothing
+  }
+  LCD_Write_Cmd(ILI9341_MAC);    // Memory Access Control command
+  LCD_Write_Data( param, 1u );
 }
 
 static void LCD_Write_Cmd( uint8_t cmd )

@@ -34,12 +34,17 @@ int main(void)
   SystemClock_Setup();
   BSP_LCD_Init();
   LTDC_Pin_Init();
+  #if (BSP_LCD_ORIENTATION == PORTRAIT )
+  BSP_LCD_Set_Orientation( PORTRAIT );
+  #elif (BSP_LCD_ORIENTATION == LANDSCAPE )
+  BSP_LCD_Set_Orientation( LANDSCAPE );
+  #endif
   LTDC_Init();
   LTDC_Layer_Init( LTDC_Layer1 );
   BSP_LCD_SetFrameBuffer_BackGroundColor( BLACK );
   #if (BSP_LCD_ORIENTATION == PORTRAIT )
   // our VIBGYOR colors are 7 colors, and let's say we wanted to display these
-  // colors horizontally in portrait orientation, then size of one rectange is
+  // colors horizontally in portrait orientation, then size of one rectangle is
   // width = 240u and height = 320u/7u = 46u
   BSP_LCD_Fill_Rectangle( VIOLET, 0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*0u, 46u );
   BSP_LCD_Fill_Rectangle( INDIGO, 0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*1u, 46u );
@@ -47,8 +52,21 @@ int main(void)
   BSP_LCD_Fill_Rectangle( GREEN,  0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*3u, 46u );
   BSP_LCD_Fill_Rectangle( YELLOW, 0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*4u, 46u );
   BSP_LCD_Fill_Rectangle( ORANGE, 0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*5u, 46u );
-  BSP_LCD_Fill_Rectangle( RED,    0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*6u, 46u );
+  BSP_LCD_Fill_Rectangle( RED,    0u, BSP_LCD_ACTIVE_WIDTH-1u, 46u*6u, 44u );
+  // NOTE: Here If I am using 46u, then there is some sort of corruption
+  // The corruption is happening because 320/7 = 45.7 exactly we round off it to
+  // 46u, but for last entry we have to adjust the values that's why 44 is used
   #elif( BSP_LCD_ORIENTATION == LANDSCAPE )
+  // our VIBGYOR colors are 7 colors, and let's say we wanted to display these
+  // colors horizontally in landscape orientation, then size of one rectangle is
+  // width = 320u and height = 240u/7u = 34u
+  BSP_LCD_Fill_Rectangle(VIOLET,  0u, BSP_LCD_ACTIVE_WIDTH-1u, 34u*0u, 34u );
+  BSP_LCD_Fill_Rectangle(INDIGO,  0u, BSP_LCD_ACTIVE_WIDTH-1u, 34u*1u, 34u );
+  BSP_LCD_Fill_Rectangle(BLUE,    0u, BSP_LCD_ACTIVE_WIDTH-1u, 34u*2u, 34u );
+  BSP_LCD_Fill_Rectangle(GREEN,   0u, BSP_LCD_ACTIVE_WIDTH-1u, 34u*3u, 34u );
+  BSP_LCD_Fill_Rectangle(YELLOW,  0u, BSP_LCD_ACTIVE_WIDTH-1u, 34u*4u, 34u );
+  BSP_LCD_Fill_Rectangle(ORANGE,  0u, BSP_LCD_ACTIVE_WIDTH-1u, 34u*5u, 34u );
+  BSP_LCD_Fill_Rectangle(RED,     0u, BSP_LCD_ACTIVE_WIDTH-1u, 34u*6u, 34u );
   #endif
   for(;;);
 }
@@ -273,6 +291,7 @@ void LTDC_Layer_Init( LTDC_Layer_TypeDef *pLayer )
   // Will use V-Start as BSP_LTDC_LAYER_V_START
   uint32_t WV_Start = AVBP + BSP_LTDC_LAYER_V_START + 1u;
   REG_SET_VAL( temp, WV_Start, 0x7FF, LTDC_LxWVPCR_WVSTPOS_Pos );
+  
   uint32_t WV_Stop =  AVBP + BSP_LTDC_LAYER_V_START + BSP_LTDC_LAYER_HEIGHT + 1u;
   WV_Stop = (WV_Stop > AAH) ? AAH : WV_Stop;
   REG_SET_VAL( temp, WV_Stop, 0x7FF, LTDC_LxWVPCR_WVSPPOS_Pos );

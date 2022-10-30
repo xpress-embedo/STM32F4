@@ -86,6 +86,7 @@ extern const uint8_t total_ltdc_pins;
 
 void BSP_LCD_Init( void );
 uint32_t BSP_LCD_Get_FB_Address( void );
+void BSP_LCD_Set_Orientation( uint8_t orientation );
 void BSP_LCD_SetFrameBuffer_BackGroundColor( uint32_t rgb888 );
 void BSP_LCD_Fill_Rectangle( uint32_t rgb888, uint32_t x_start, uint32_t x_width,uint32_t y_start,uint32_t y_width );
 
