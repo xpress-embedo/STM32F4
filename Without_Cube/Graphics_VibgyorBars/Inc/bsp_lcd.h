@@ -40,8 +40,17 @@
 #error "Orientation Not Selected."
 #endif
 
-#define BSP_LTDC_LAYER_WIDTH        (BSP_LCD_ACTIVE_WIDTH)
-#define BSP_LTDC_LAYER_HEIGHT       (BSP_LCD_ACTIVE_HEIGHT)
+// #define BSP_LTDC_LAYER_WIDTH        (BSP_LCD_ACTIVE_WIDTH)
+// #define BSP_LTDC_LAYER_HEIGHT       (BSP_LCD_ACTIVE_HEIGHT)
+// The image is added "STM32F4_TFT_Layout.png" in the documentation folder,
+// this is the display layout, and same is displayed on the TFT screen.
+#define BSP_LTDC_LAYER_WIDTH        (200u)
+#define BSP_LTDC_LAYER_HEIGHT       (64u)
+
+#define BSP_LTDC_LAYER_H_START      (20u)
+#define BSP_LTDC_LAYER_H_STOP       (220u)  // BSP_LTDC_LAYER_H_START + BSP_LTDC_LAYER_WIDTH = 20+200 (these are not used)
+#define BSP_LTDC_LAYER_V_START      (40u)
+#define BSP_LTDC_LAYER_V_STOP       (104u)  // BSP_LTDC_LAYER_V_START +  BSP_LTDC_LAYER_HEIGHT = 104u (these are not used)
 
 // LCD Pixel Formats
 #define BSP_LCD_PIXEL_FMT_L8        (1u)

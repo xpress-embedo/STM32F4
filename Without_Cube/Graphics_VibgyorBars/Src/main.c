@@ -244,9 +244,9 @@ void LTDC_Layer_Init( LTDC_Layer_TypeDef *pLayer )
   uint32_t AVBP = REG_READ_VAL( pLTDC->BPCR, 0xFFF, LTDC_BPCR_AVBP_Pos );
   uint32_t AAH =  REG_READ_VAL (pLTDC->AWCR, 0x7FF, LTDC_AWCR_AAH_Pos );
 
-  // Will use H-Start as 0 and Layer Width as LCD Width
-  uint32_t WH_Start = AHBP + 0u + 1u;
-  uint32_t WH_Stop = AHBP + 0u + BSP_LCD_ACTIVE_WIDTH + 1u;
+  // Will use H-Start as BSP_LTDC_LAYER_H_START and Layer Width as LCD Width
+  uint32_t WH_Start = AHBP + BSP_LTDC_LAYER_H_START + 1u;
+  uint32_t WH_Stop = AHBP + BSP_LTDC_LAYER_H_START + BSP_LTDC_LAYER_WIDTH + 1u;
   WH_Stop = (WH_Stop > AAW) ? AAW : WH_Stop;
 
   REG_SET_VAL( temp, WH_Start, 0xFFF, LTDC_LxWHPCR_WHSTPOS_Pos );
@@ -257,10 +257,10 @@ void LTDC_Layer_Init( LTDC_Layer_TypeDef *pLayer )
   SET_VALUE( pLayer->WHPCR, temp );
 
   temp = 0u;
-  // Will use V-Start as 0
-  uint32_t WV_Start = AVBP + 0u + 1u;
+  // Will use V-Start as BSP_LTDC_LAYER_V_START
+  uint32_t WV_Start = AVBP + BSP_LTDC_LAYER_V_START + 1u;
   REG_SET_VAL( temp, WV_Start, 0x7FF, LTDC_LxWVPCR_WVSTPOS_Pos );
-  uint32_t WV_Stop =  AVBP + 0u + BSP_LCD_ACTIVE_HEIGHT + 1u;
+  uint32_t WV_Stop =  AVBP + BSP_LTDC_LAYER_V_START + BSP_LTDC_LAYER_HEIGHT + 1u;
   WV_Stop = (WV_Stop > AAH) ? AAH : WV_Stop;
   REG_SET_VAL( temp, WV_Stop, 0x7FF, LTDC_LxWVPCR_WVSPPOS_Pos );
   SET_VALUE( pLayer->WVPCR, temp );
