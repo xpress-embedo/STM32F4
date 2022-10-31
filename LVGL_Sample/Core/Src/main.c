@@ -21,7 +21,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "lvgl/lvgl.h"
+#include "lvgl/lv_conf.h"
+#include "tft.h"
+#include "touchpad.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -83,7 +86,9 @@ int main(void)
 
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
-
+  lv_init();
+  tft_init();
+  touchpad_init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -93,6 +98,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    HAL_Delay(5);
+    lv_timer_handler();
   }
   /* USER CODE END 3 */
 }
