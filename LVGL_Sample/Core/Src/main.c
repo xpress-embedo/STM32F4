@@ -25,6 +25,8 @@
 #include "lvgl/lv_conf.h"
 #include "tft.h"
 #include "touchpad.h"
+
+#include "lvgl/examples/lv_examples.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,7 +52,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+static void LTDC_Clock_Init( void );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -81,7 +83,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  LTDC_Clock_Init();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -89,6 +91,9 @@ int main(void)
   lv_init();
   tft_init();
   touchpad_init();
+
+  // lv_example_get_started_1();
+  lv_example_label_1();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -158,7 +163,27 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+/**
+  * @brief  This function generated the 6.25 MHz Clock for LTDC peripheral
+  *         Ideally this peice of code should be the part of the 
+  *         SystemClock_Config(void) function, but since we disabled the LTDC
+  *         Code generation in CubeMX, this is not generated and hence a 
+  *         separate function is needed.
+  * @retval None
+  */
+static void LTDC_Clock_Init( void )
+{
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+  /* Configures LTDC clock to 6.25MHz */
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
+  PeriphClkInitStruct.PLLSAI.PLLSAIN = 50;
+  PeriphClkInitStruct.PLLSAI.PLLSAIR = 2;
+  PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_8;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
 /* USER CODE END 4 */
 
 /**

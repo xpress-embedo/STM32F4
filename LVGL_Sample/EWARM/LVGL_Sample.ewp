@@ -274,7 +274,7 @@
                 </option>
                 <option>
                     <name>CCDiagWarning</name>
-                    <state></state>
+                    <state>Pa089</state>
                 </option>
                 <option>
                     <name>CCDiagError</name>
@@ -1208,6 +1208,45 @@
         <name>lvgl</name>
         <group>
             <name>examples</name>
+            <group>
+                <name>get_started</name>
+                <file>
+                    <name>$PROJ_DIR$\..\lvgl\examples\get_started\lv_example_get_started.h</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\lvgl\examples\get_started\lv_example_get_started_1.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\lvgl\examples\get_started\lv_example_get_started_2.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\lvgl\examples\get_started\lv_example_get_started_3.c</name>
+                </file>
+            </group>
+            <group>
+                <name>widgets</name>
+                <group>
+                    <name>labels</name>
+                    <file>
+                        <name>$PROJ_DIR$\..\lvgl\examples\widgets\label\lv_example_label_1.c</name>
+                    </file>
+                    <file>
+                        <name>$PROJ_DIR$\..\lvgl\examples\widgets\label\lv_example_label_2.c</name>
+                    </file>
+                    <file>
+                        <name>$PROJ_DIR$\..\lvgl\examples\widgets\label\lv_example_label_3.c</name>
+                    </file>
+                    <file>
+                        <name>$PROJ_DIR$\..\lvgl\examples\widgets\label\lv_example_label_4.c</name>
+                    </file>
+                    <file>
+                        <name>$PROJ_DIR$\..\lvgl\examples\widgets\label\lv_example_label_5.c</name>
+                    </file>
+                </group>
+            </group>
+            <file>
+                <name>$PROJ_DIR$\..\lvgl\examples\lv_examples.h</name>
+            </file>
         </group>
         <group>
             <name>src</name>
