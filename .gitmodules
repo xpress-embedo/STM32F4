@@ -1,0 +1,3 @@
+[submodule "Without_Cube/Common/ThirdParty/LVGL"]
+	path = Without_Cube/Common/ThirdParty/LVGL
+	url = https://github.com/littlevgl/lvgl.git
