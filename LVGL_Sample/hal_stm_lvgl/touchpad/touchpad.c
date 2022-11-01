@@ -24,7 +24,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static bool touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t *data);
+static void touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t *data);
 static bool touchpad_get_xy(int16_t *x, int16_t *y);
 
 /**********************
@@ -42,9 +42,6 @@ static bool touchpad_get_xy(int16_t *x, int16_t *y);
 /**
  * Initialize your input devices here
  */
-// static bool touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t *data)
-// void (*read_cb)(struct _lv_indev_drv_t * indev_drv, lv_indev_data_t * data);
-// void (*read_cb)(struct _lv_indev_drv_t * indev_drv, lv_indev_data_t * data);
 void touchpad_init(void)
 {
   stmpe811_Init(TS_I2C_ADDRESS);
@@ -52,7 +49,7 @@ void touchpad_init(void)
 
   static lv_indev_drv_t indev_drv;
   lv_indev_drv_init(&indev_drv);
-  // indev_drv.read_cb = touchpad_read;
+  indev_drv.read_cb = touchpad_read;
   indev_drv.type = LV_INDEV_TYPE_POINTER;
   lv_indev_drv_register(&indev_drv);
 }
@@ -68,7 +65,7 @@ void touchpad_init(void)
  * @param y put the y coordinate here
  * @return true: the device is pressed, false: released
  */
-static bool touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t *data)
+static void touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t *data)
 {
 	static int16_t last_x = 0;
 	static int16_t last_y = 0;
@@ -90,7 +87,7 @@ static bool touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t *data)
 		data->state = LV_INDEV_STATE_REL;
 	}
 
-	return false;
+	// return false;
 }
 
 

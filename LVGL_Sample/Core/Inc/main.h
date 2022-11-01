@@ -241,9 +241,6 @@ void Error_Handler(void);
 #define NBL0_GPIO_Port GPIOE
 #define NBL1_Pin GPIO_PIN_1
 #define NBL1_GPIO_Port GPIOE
-void   MX_GPIO_Init(void);
-void   MX_LTDC_Init(void);
-void   MX_SPI5_Init(void);
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
