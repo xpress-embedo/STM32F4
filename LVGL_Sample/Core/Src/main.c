@@ -27,6 +27,7 @@
 #include "lvgl/lvgl.h"
 
 #include "lvgl/examples/lv_examples.h"
+#include "lvgl/examples/anim/lv_example_anim.h"
 #include "rgb_mixer.h"
 /* USER CODE END Includes */
 
@@ -99,9 +100,10 @@ int main(void)
   // lv_example_label_1();
   // lv_example_btn_1();
   // lv_example_scroll_1();
+  lv_example_anim_1();
   
   // RGB Mixer User Interface
-  rgb_mixer_created_ui();
+  // rgb_mixer_created_ui();
   /* USER CODE END 2 */
 
   /* Infinite loop */
