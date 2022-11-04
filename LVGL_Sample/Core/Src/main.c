@@ -27,6 +27,7 @@
 #include "lvgl/lvgl.h"
 
 #include "lvgl/examples/lv_examples.h"
+#include "rgb_mixer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -91,11 +92,16 @@ int main(void)
   lv_init();
   tft_init();
   touchpad_init();
+  // rotate the display
+  lv_disp_set_rotation( lv_disp_get_default(), LV_DISP_ROT_270 );
 
-  lv_example_get_started_1();
+  // lv_example_get_started_1();
   // lv_example_label_1();
   // lv_example_btn_1();
   // lv_example_scroll_1();
+  
+  // RGB Mixer User Interface
+  rgb_mixer_created_ui();
   /* USER CODE END 2 */
 
   /* Infinite loop */
