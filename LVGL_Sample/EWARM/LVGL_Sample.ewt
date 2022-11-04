@@ -1346,6 +1346,12 @@
             <group>
                 <name>widgets</name>
                 <group>
+                    <name>btn</name>
+                    <file>
+                        <name>$PROJ_DIR$\..\lvgl\examples\widgets\btn\lv_example_btn_1.c</name>
+                    </file>
+                </group>
+                <group>
                     <name>labels</name>
                     <file>
                         <name>$PROJ_DIR$\..\lvgl\examples\widgets\label\lv_example_label_1.c</name>

@@ -90,7 +90,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   lv_init();
   tft_init();
-  // touchpad_init();
+  touchpad_init();
 
   lv_example_label_1();
   // lv_example_btn_1();

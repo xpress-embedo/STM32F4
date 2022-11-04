@@ -92,7 +92,8 @@ int main(void)
   tft_init();
   touchpad_init();
 
-  lv_example_label_1();
+  lv_example_get_started_1();
+  // lv_example_label_1();
   // lv_example_btn_1();
   // lv_example_scroll_1();
   /* USER CODE END 2 */
