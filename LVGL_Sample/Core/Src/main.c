@@ -96,11 +96,11 @@ int main(void)
   // rotate the display
   lv_disp_set_rotation( lv_disp_get_default(), LV_DISP_ROT_270 );
 
-  // lv_example_get_started_1();
+  lv_example_get_started_1();
   // lv_example_label_1();
   // lv_example_btn_1();
   // lv_example_scroll_1();
-  lv_example_anim_1();
+  // lv_example_anim_1();
   
   // RGB Mixer User Interface
   // rgb_mixer_created_ui();
