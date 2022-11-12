@@ -4,7 +4,8 @@
 function(iar_cspy_add_test TARGET TEST_NAME EXPECTED_OUTPUT)
   # Add a test for CTest
   add_test(NAME ${TEST_NAME}
-           COMMAND ${TOOLKIT_DIR}/../common/bin/cspybat --silent
+           # COMMAND ${TOOLKIT_DIR}/../common/bin/cspybat --silent
+           COMMAND ${TOOLKIT_DIR}/../common/bin/cspybat
            # C-SPY drivers
            "${TOOLKIT_DIR}/bin/${CMAKE_SYSTEM_PROCESSOR}proc.dll"
            "${TOOLKIT_DIR}/bin/${CMAKE_SYSTEM_PROCESSOR}sim2.dll"
