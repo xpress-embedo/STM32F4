@@ -39,9 +39,11 @@
 #define LED_1_TASK_TIME       500u    /* In milliseconds */
 #define LED_2_TASK_TIME       250u    /* In milliseconds */
 #define USER_BTN_TASK_TIME    10u     /* In milliseconds */
+#define SERIAL_TX_TIME        1000u   /* In milliseconds */
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 uint8_t led_1_state = FALSE;
@@ -49,11 +51,16 @@ uint8_t led_2_state = FALSE;
 uint32_t led_1_timestamp = 0u;
 uint32_t led_2_timestamp = 0u;
 uint32_t user_btn_timestamp = 0u;
+uint32_t usart2_tx_timestamp = 0u;
+
+const uint8_t msg1[] = "Getting Started with STM32\r\n";
+const uint8_t msg2[] = "Hi, Transmitting from STM32F4\r\n";
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -91,7 +98,9 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  HAL_UART_Transmit( &huart2, msg1, sizeof(msg1), 100u );
 
   /* USER CODE END 2 */
 
@@ -158,6 +167,13 @@ int main(void)
         HAL_GPIO_WritePin( USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_RESET);
       }
     }
+
+    /* Task for Sending Serial Data Periodically */
+    if( (HAL_GetTick() - usart2_tx_timestamp) > SERIAL_TX_TIME )
+    {
+      usart2_tx_timestamp = HAL_GetTick();
+      HAL_UART_Transmit( &huart2, msg2, sizeof(msg2), 100u );
+    }
   }
   /* USER CODE END 3 */
 }
@@ -201,6 +217,39 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 9600;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+
 }
 
 /**

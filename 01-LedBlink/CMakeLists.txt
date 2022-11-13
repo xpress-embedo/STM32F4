@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.23)
 
 project(01-LedBlinkCMake)
 
-OPTION( GNU_IAR_COMPILER_SELECT "Set ON for GNU and OFF for IAR" OFF )
+OPTION( GNU_IAR_COMPILER_SELECT "Set ON for GNU and OFF for IAR" ON )
 
 if( GNU_IAR_COMPILER_SELECT )
   enable_language( C ASM )
@@ -32,6 +32,7 @@ if( GNU_IAR_COMPILER_SELECT )
         Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c 
         Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c 
         Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c 
+        Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c 
         Src/system_stm32f4xx.c 
         startup_stm32f401xe.s
         )
@@ -117,6 +118,7 @@ else()
         Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c 
         Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c 
         Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c 
+        Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c
         Src/system_stm32f4xx.c 
         EWARM/startup_stm32f401xe.s
         )
