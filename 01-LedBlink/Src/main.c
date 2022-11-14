@@ -105,7 +105,8 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_UART_Transmit( &huart2, msg1, sizeof(msg1), 100u );
-  HAL_UART_Receive_DMA( &huart2, &rx_data, 1u );          // only receive 1 byte
+  // HAL_UART_Receive_DMA( &huart2, &rx_data, 1u );          // only receive 1 byte
+  HAL_UART_Receive_IT( &huart2, &rx_data, 1u );          // only receive 1 byte
 
   /* USER CODE END 2 */
 
@@ -310,8 +311,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   /* Prevent unused argument(s) compilation warning */
   UNUSED(huart);
-  // HAL_UART_Transmit( huart, &rx_data, 1u, 10u );
-  HAL_UART_Transmit( &huart2, msg1, sizeof(msg1), 100u );
+  HAL_UART_Transmit( huart, &rx_data, 1u, 10u );
   // Again Enable this
   // HAL_UART_Receive_DMA( &huart2, &rx_data, 1u );          // only receive 1 byte
 }
