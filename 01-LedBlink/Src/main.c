@@ -44,6 +44,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart2_rx;
 
 /* USER CODE BEGIN PV */
 uint8_t led_1_state = FALSE;
@@ -55,11 +56,13 @@ uint32_t usart2_tx_timestamp = 0u;
 
 const uint8_t msg1[] = "Getting Started with STM32\r\n";
 const uint8_t msg2[] = "Hi, Transmitting from STM32F4\r\n";
+uint8_t rx_data = 0u;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -98,9 +101,11 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_UART_Transmit( &huart2, msg1, sizeof(msg1), 100u );
+  HAL_UART_Receive_DMA( &huart2, &rx_data, 1u );          // only receive 1 byte
 
   /* USER CODE END 2 */
 
@@ -253,6 +258,22 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Stream5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -285,7 +306,15 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(huart);
+  // HAL_UART_Transmit( huart, &rx_data, 1u, 10u );
+  HAL_UART_Transmit( &huart2, msg1, sizeof(msg1), 100u );
+  // Again Enable this
+  // HAL_UART_Receive_DMA( &huart2, &rx_data, 1u );          // only receive 1 byte
+}
 /* USER CODE END 4 */
 
 /**
