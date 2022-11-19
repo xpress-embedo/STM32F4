@@ -11,6 +11,14 @@
 #define BLK_OFF()               // Backlight Off Macro
 #define BLK_ON()                // Backlight On Macro
 
+#define MADCTL_MY               (0x80u)   // Bottom to top
+#define MADCTL_MX               (0x40u)   // Right to left
+#define MADCTL_MV               (0x20u)   // Reverse Mode
+#define MADCTL_ML               (0x10u)   // LCD refresh Bottom to top
+#define MADCTL_RGB              (0x00u)   // Led-Green-Blue pixel order
+#define MADCTL_BGR              (0x08u)   // Blue-Green-Red pixel order
+#define MADCTL_MH               (0x04u)   // LCD refresh right to left
+
 
 extern SPI_HandleTypeDef hspi2;
 
@@ -168,14 +176,64 @@ void ILI9341_Init( void )
   // LCD Direction Set
 }
 
+void ILI9341_SetOrientation( uint8_t orientation )
+{
+  uint8_t param = 0u;
+  // Assuming 0=Portrait and 1=Lanscape
+  if( orientation == 0u)
+  {
+    /* Memory Access Control <portrait setting> */
+    param = MADCTL_MY | MADCTL_MX | MADCTL_BGR;
+  }
+  else if( orientation == 1u )
+  {
+    /*Memory Access Control <Landscape setting>*/
+    param = MADCTL_MV | MADCTL_MY | MADCTL_BGR;
+  }
+  // Memory Access Control command
+  ILI9341_SendCommand(ILI9341_MAC);
+  ILI9341_SendData(&param, 1u);
+}
+
+// Set the display area
 void ILI9341_SetWindow( uint16_t start_x, uint16_t start_y, uint16_t end_x, uint16_t end_y )
 {
+  uint8_t params[4] = { 0 };
+  // Column Address Set (2A)
+  params[0] = start_x >> 8u;
+  params[1] = 0xFF & start_x;
+  params[2] = end_x >> 8u;
+  params[3] = 0xFF & end_x;
+  ILI9341_SendCommand( ILI9341_CASET );
+  ILI9341_SendData( params, 4u );
 
+  // Row Address Set (2B) also called as page address set
+  params[0] = start_y >> 8u;
+  params[1] = 0xFF & start_y;
+  params[2] = end_y >> 8u;
+  params[3] = 0xFF & end_y;
+  ILI9341_SendCommand( ILI9341_RASET );
+  ILI9341_SendData( params, 4u );
 }
 
 void ILI9341_WritePixel( uint16_t x, uint16_t y, uint16_t color )
 {
+  uint8_t data[2];
+  data[0] = color >> 8u;
+  data[1] = color;
+  ILI9341_SetWindow(x, y, x, y);
+  // Enable to access GRAM
+  ILI9341_SendCommand(ILI9341_GRAM);
+  ILI9341_SendData( data, 2u );
+}
 
+void ILI9341_Flush( uint8_t* pixels, uint16_t length, uint16_t x, uint16_t y, uint16_t w, uint16_t h )
+{
+  uint16_t width = (x + w - 1u);
+  uint16_t height = (y + h - 1u);
+  ILI9341_SetWindow( x, y, width, height );
+  ILI9341_SendCommand(ILI9341_GRAM);
+  ILI9341_SendData( pixels, length );
 }
 
 

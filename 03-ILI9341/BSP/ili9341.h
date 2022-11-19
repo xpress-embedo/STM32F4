@@ -91,8 +91,9 @@
 #define ILI9341_PRC                  0xF7U   /* Pump ratio control register */
 
 void ILI9341_Init( void );
+void ILI9341_SetOrientation( uint8_t orientation );
 void ILI9341_SetWindow( uint16_t start_x, uint16_t start_y, uint16_t end_x, uint16_t end_y );
 void ILI9341_WritePixel( uint16_t x, uint16_t y, uint16_t color );
-
+void ILI9341_Flush( uint8_t* pixels, uint16_t length, uint16_t x, uint16_t y, uint16_t w, uint16_t h );
 
 #endif // _ILI9341_H_
