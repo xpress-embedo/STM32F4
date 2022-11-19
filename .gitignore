@@ -25,6 +25,7 @@
 *.ninja_log
 *.pbw
 *.ninja
+*.asm
 
 # STM32CubeIDE or Eclipse Files
 *.metadata
@@ -43,6 +44,7 @@ Debug
 # Proteus Files
 *.pdsbak
 *.workspace
+*.pdsprj
 
 # Other Folders
 /resources/
