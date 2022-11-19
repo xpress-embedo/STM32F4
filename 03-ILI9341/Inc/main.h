@@ -46,6 +46,9 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
+#define COVER(x)                do {      \
+                                      x;  \
+                                } while(0)
 
 /* USER CODE END EM */
 
@@ -67,12 +70,11 @@ void Error_Handler(void);
 #define USER_LED_GPIO_Port GPIOA
 #define DC_Pin GPIO_PIN_9
 #define DC_GPIO_Port GPIOD
-#define RESET_Pin GPIO_PIN_10
-#define RESET_GPIO_Port GPIOD
 #define CS_Pin GPIO_PIN_11
 #define CS_GPIO_Port GPIOD
 /* USER CODE BEGIN Private defines */
-
+void ILI9341_SendCommand( uint8_t command );
+void ILI9341_SendData( uint8_t *data, uint16_t length );
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

@@ -1,19 +1,16 @@
-
 #include "ili9341.h"
+#include "main.h"
 
-#define COVER(x)                do {      \
-                                      x;  \
-                                } while(0)
-
-#define RESET_DELAY()           COVER(HAL_Delay(100);)
-#define RESET_LOW()             COVER(HAL_GPIO_WritePin( RESET_GPIO_Port, RESET_Pin, GPIO_PIN_RESET);)
-#define RESET_HIGH()            COVER(HAL_GPIO_WritePin( RESET_GPIO_Port, RESET_Pin, GPIO_PIN_SET);)
+#define RESET_DELAY()           COVER(HAL_Delay(200);)
+#define RESET_LOW()
+#define RESET_HIGH()
 #define CS_LOW()                COVER(HAL_GPIO_WritePin( CS_GPIO_Port, CS_Pin, GPIO_PIN_RESET); )
 #define CS_HIGH()               COVER(HAL_GPIO_WritePin( CS_GPIO_Port, CS_Pin, GPIO_PIN_SET); )
-#define DC_LOW()                COVER(HAL_GPIO_WritePin( DC_GPIO_Port, CS_Pin, GPIO_PIN_RESET); )
-#define DC_HIGH()               COVER(HAL_GPIO_WritePin( DC_GPIO_Port, CS_Pin, GPIO_PIN_SET); )
+#define DC_LOW()                COVER(HAL_GPIO_WritePin( DC_GPIO_Port, DC_Pin, GPIO_PIN_RESET); )
+#define DC_HIGH()               COVER(HAL_GPIO_WritePin( DC_GPIO_Port, DC_Pin, GPIO_PIN_SET); )
 #define BLK_OFF()               // Backlight Off Macro
 #define BLK_ON()                // Backlight On Macro
+
 
 extern SPI_HandleTypeDef hspi2;
 
@@ -26,8 +23,12 @@ static void ILI9341_SendData( uint8_t *data, uint16_t length );
 void ILI9341_Init( void )
 {
   uint8_t params[15] = { 0 };
-  ILI9341_Reset();
+  ILI9341_Reset();    // --> don't understand when ever I am using this function, my SPI stops working
+  // uint8_t data[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
+  // ILI9341_SendData( data, 15u);
+  // while(1);
   ILI9341_SoftReset();
+
   // Power Control-A
   ILI9341_SendCommand(ILI9341_POWERA);
   params[0]= 0x39;
@@ -185,7 +186,6 @@ static void ILI9341_Reset( void )
   RESET_DELAY();
   RESET_HIGH();
   RESET_DELAY();
-  CS_LOW();
   BLK_ON();
 }
 
@@ -205,16 +205,15 @@ static void ILI9341_SoftReset( void )
 
 static void ILI9341_SendCommand( uint8_t command )
 {
-  uint32_t timeout = 2u;
   CS_LOW();
   DC_LOW();
-  HAL_SPI_Transmit( &hspi2, &command, 1u, timeout );
+  HAL_SPI_Transmit( &hspi2, &command, 1u, 10u );
   CS_HIGH();
 }
 
 static void ILI9341_SendData( uint8_t *data, uint16_t length )
 {
-  uint32_t timeout = length*2u;     // Considering timeout as 2 * length milliseconds
+  uint32_t timeout = length*10u;     // Considering timeout as 10 * length milliseconds
   CS_LOW();
   DC_HIGH();
   HAL_SPI_Transmit( &hspi2, data, length, timeout );
