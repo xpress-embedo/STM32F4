@@ -2,6 +2,33 @@
 
 #include "main.h"
 
+// LCD Height and Width
+#define ILI9341_LCD_WIDTH           (240u)
+#define ILI9341_LCD_HEIGHT          (320u)
+
+#define ILI9341_PIXEL_COUNT         (ILI9341_LCD_WIDTH*ILI9341_LCD_HEIGHT)
+
+// Colors in RGB565 Format
+#define ILI9341_BLACK               0x0000      ///<   0,   0,   0
+#define ILI9341_NAVY                0x000F      ///<   0,   0, 123
+#define ILI9341_DARKGREEN           0x03E0      ///<   0, 125,   0
+#define ILI9341_DARKCYAN            0x03EF      ///<   0, 125, 123
+#define ILI9341_MAROON              0x7800      ///< 123,   0,   0
+#define ILI9341_PURPLE              0x780F      ///< 123,   0, 123
+#define ILI9341_OLIVE               0x7BE0      ///< 123, 125,   0
+#define ILI9341_LIGHTGREY           0xC618      ///< 198, 195, 198
+#define ILI9341_DARKGREY            0x7BEF      ///< 123, 125, 123
+#define ILI9341_BLUE                0x001F      ///<   0,   0, 255
+#define ILI9341_GREEN               0x07E0      ///<   0, 255,   0
+#define ILI9341_CYAN                0x07FF      ///<   0, 255, 255
+#define ILI9341_RED                 0xF800      ///< 255,   0,   0
+#define ILI9341_MAGENTA             0xF81F      ///< 255,   0, 255
+#define ILI9341_YELLOW              0xFFE0      ///< 255, 255,   0
+#define ILI9341_WHITE               0xFFFF      ///< 255, 255, 255
+#define ILI9341_ORANGE              0xFD20      ///< 255, 165,   0
+#define ILI9341_GREENYELLOW         0xAFE5      ///< 173, 255,  41
+#define ILI9341_PINK                0xFC18      ///< 255, 130, 198
+
 /* Level 1 Commands */
 #define ILI9341_SWRESET             0x01U   /* Software Reset */
 #define ILI9341_READ_DISPLAY_ID     0x04U   /* Read display identification information */
@@ -91,9 +118,15 @@
 #define ILI9341_PRC                  0xF7U   /* Pump ratio control register */
 
 void ILI9341_Init( void );
+void ILI9341_SendCommand( uint8_t command, uint8_t *data, uint32_t length );
+void ILI9341_SendData( uint8_t *data, uint32_t length );
+void ILI9341_SetWindow( uint16_t x_start, uint16_t y_start, uint16_t x_end, uint16_t y_end );
+void ILI9341_DrawPixel( uint16_t x, uint16_t y, uint16_t color );
+void ILI9341_Fill( uint16_t color );
+void ILI9341_FillRectangle( int16_t x_start, int16_t y_start, int16_t x_end, int16_t y_end, uint16_t color );
+
 void ILI9341_SetOrientation( uint8_t orientation );
-void ILI9341_SetWindow( uint16_t start_x, uint16_t start_y, uint16_t end_x, uint16_t end_y );
-void ILI9341_WritePixel( uint16_t x, uint16_t y, uint16_t color );
-void ILI9341_Flush( uint8_t* pixels, uint16_t length, uint16_t x, uint16_t y, uint16_t w, uint16_t h );
+
+
 
 #endif // _ILI9341_H_

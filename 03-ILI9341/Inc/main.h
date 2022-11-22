@@ -73,8 +73,7 @@ void Error_Handler(void);
 #define CS_Pin GPIO_PIN_11
 #define CS_GPIO_Port GPIOD
 /* USER CODE BEGIN Private defines */
-void ILI9341_SendCommand( uint8_t command );
-void ILI9341_SendData( uint8_t *data, uint16_t length );
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
