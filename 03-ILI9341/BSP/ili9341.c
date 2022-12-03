@@ -1,5 +1,6 @@
 #include "ili9341.h"
 #include "main.h"
+#include "stdlib.h"
 
 #define RESET_DELAY()           COVER(HAL_Delay(200);)
 #define RESET_LOW()
@@ -11,13 +12,13 @@
 #define BLK_OFF()               // Backlight Off Macro
 #define BLK_ON()                // Backlight On Macro
 
-#define MADCTL_MY               (0x80u)   // Bottom to top
-#define MADCTL_MX               (0x40u)   // Right to left
-#define MADCTL_MV               (0x20u)   // Reverse Mode
-#define MADCTL_ML               (0x10u)   // LCD refresh Bottom to top
-#define MADCTL_RGB              (0x00u)   // Led-Green-Blue pixel order
-#define MADCTL_BGR              (0x08u)   // Blue-Green-Red pixel order
-#define MADCTL_MH               (0x04u)   // LCD refresh right to left
+#define ILI9341_MADCTL_MY       (0x80u)   // Bottom to top
+#define ILI9341_MADCTL_MX       (0x40u)   // Right to left
+#define ILI9341_MADCTL_MV       (0x20u)   // Reverse Mode
+#define ILI9341_MADCTL_ML       (0x10u)   // LCD refresh Bottom to top
+#define ILI9341_MADCTL_RGB      (0x00u)   // Led-Green-Blue pixel order
+#define ILI9341_MADCTL_BGR      (0x08u)   // Blue-Green-Red pixel order
+#define ILI9341_MADCTL_MH       (0x04u)   // LCD refresh right to left
 
 
 extern SPI_HandleTypeDef hspi2;
@@ -51,7 +52,9 @@ static uint8_t ILI9341_InitCommands[] =
   0x00                                       // End of list
 };
 
-static uint8_t tft_buffer[ILI9341_LCD_WIDTH][ILI9341_LCD_HEIGHT] = { 0 };
+static LCD_Orientation_e lcd_orientation = LCD_PORTRAIT;
+static uint16_t lcd_width = ILI9341_LCD_WIDTH;
+static uint16_t lcd_height = ILI9341_LCD_HEIGHT;
 
 /*-----------------------------Private Functions------------------------------*/
 static void ILI9341_Reset( void );
@@ -94,25 +97,6 @@ void ILI9341_Init( void )
   } while (command > 0x00 );
 }
 
-// void ILI9341_SetOrientation( uint8_t orientation )
-// {
-//   uint8_t param = 0u;
-//   // Assuming 0=Portrait and 1=Lanscape
-//   if( orientation == 0u)
-//   {
-//     /* Memory Access Control <portrait setting> */
-//     param = MADCTL_MY | MADCTL_MX | MADCTL_BGR;
-//   }
-//   else if( orientation == 1u )
-//   {
-//     /*Memory Access Control <Landscape setting>*/
-//     param = MADCTL_MV | MADCTL_MY | MADCTL_BGR;
-//   }
-//   // Memory Access Control command
-//   // ILI9341_SendCommand(ILI9341_MAC);
-//   ILI9341_SendData(&param, 1u);
-// }
-
 
 void ILI9341_SendCommand( uint8_t command, uint8_t *data, uint32_t length )
 {
@@ -137,6 +121,26 @@ void ILI9341_SendData( uint8_t *data, uint32_t length )
   CS_HIGH();
 }
 
+void ILI9341_Send_16BitData( uint16_t *data, uint32_t length )
+{
+  uint32_t idx = 0u;
+  uint8_t value[2] = { 0 };
+  CS_LOW();
+  DC_HIGH();
+  for( idx=0; idx<length; idx++ )
+  {
+    data[idx] = ILI9341_RED;
+    value[0] = data[idx] >> 8u;
+    value[1] = data[idx] && 0xFF;
+    HAL_SPI_Transmit( &hspi2, value, 2u, 10u );
+  }
+  CS_HIGH();
+  // Earlier the plan was to use the 16-bit mode of STM32 SPI
+  // but facing some problem, will work on that little later
+  // HAL_SPI_DeInit( &hspi2 );
+  // MX_SPI2_Init();
+}
+
 // Set the display area
 void ILI9341_SetWindow( uint16_t x_start, uint16_t y_start, uint16_t x_end, uint16_t y_end )
 {
@@ -157,6 +161,56 @@ void ILI9341_SetWindow( uint16_t x_start, uint16_t y_start, uint16_t x_end, uint
   ILI9341_SendCommand( ILI9341_RASET, params, 4u );
 }
 
+void ILI9341_SetOrientation( LCD_Orientation_e orientation )
+{
+  uint8_t data = 0x00;
+
+  switch (orientation)
+  {
+  case LCD_ORIENTATION_0:
+    data = (ILI9341_MADCTL_MY | ILI9341_MADCTL_BGR);
+    lcd_width = ILI9341_LCD_WIDTH;
+    lcd_height = ILI9341_LCD_HEIGHT;
+    break;
+  case LCD_ORIENTATION_90:
+    data = (ILI9341_MADCTL_MV | ILI9341_MADCTL_BGR);
+    lcd_width = ILI9341_LCD_HEIGHT;
+    lcd_height = ILI9341_LCD_WIDTH;
+    break;
+  case LCD_ORIENTATION_180:
+    data = (ILI9341_MADCTL_MX | ILI9341_MADCTL_BGR);
+    lcd_width = ILI9341_LCD_WIDTH;
+    lcd_height = ILI9341_LCD_HEIGHT;
+    break;
+  case LCD_ORIENTATION_270:
+    data = (ILI9341_MADCTL_MX | ILI9341_MADCTL_MY | ILI9341_MADCTL_MV | ILI9341_MADCTL_BGR);
+    lcd_width = ILI9341_LCD_HEIGHT;
+    lcd_height = ILI9341_LCD_WIDTH;
+    break;
+  default:
+    orientation = LCD_ORIENTATION_0;
+    data = (ILI9341_MADCTL_MY | ILI9341_MADCTL_BGR);
+    break;
+  }
+  lcd_orientation = orientation;
+  ILI9341_SendCommand(ILI9341_MAC, &data, 1u );
+}
+
+LCD_Orientation_e ILI9341_GetOrientation( void )
+{
+  return lcd_orientation;
+}
+
+uint16_t ILI9341_GetWidth( void )
+{
+  return lcd_width;
+}
+
+uint16_t ILI9341_GetHeight( void )
+{
+  return lcd_height;
+}
+
 void ILI9341_DrawPixel( uint16_t x, uint16_t y, uint16_t color )
 {
   uint8_t data[2] = { (color>>8u), (color & 0xFF) };
@@ -171,14 +225,35 @@ void ILI9341_Fill( uint16_t color )
 {
   uint32_t total_pixel_counts = ILI9341_PIXEL_COUNT;    // total pixels on this TFT
   uint8_t data[2] = { (color >> 8u), (color & 0xFF) };
+
+  ILI9341_SetWindow( 0u, 0u, (lcd_width-1u), (lcd_height-1u) );
   
-  ILI9341_SetWindow( 0u, 0u, (ILI9341_LCD_WIDTH-1u), (ILI9341_LCD_HEIGHT-1u) );
   ILI9341_SendCommand(ILI9341_GRAM, 0u, 0u );
   while( total_pixel_counts )
   {
     ILI9341_SendData( data, 2u );
+    // ILI9341_Send_16BitData(&color, 1u);
     total_pixel_counts--;
   }
+}
+
+/**
+ * @brief Draws a rectangle on Glcd.
+ * 
+ * Draws a rectangle on Glcd by using the specified parameters.
+ * 
+ * @param x_upper_left: x coordinate of the upper left rectangle corner. 
+ * @param y_upper_left: y coordinate of the upper left rectangle corner. 
+ * @param x_bottom_right: x coordinate of the lower right rectangle corner. 
+ * @param y_bottom_right: y coordinate of the lower right rectangle corner. 
+ * @param color: color parameter
+ */
+void ILI9341_Rectangle( int16_t x_upper_left, int16_t y_upper_left, int16_t x_bottom_right, int16_t y_bottom_right, uint16_t color)
+{
+  ILI9341_DrawVLine( y_upper_left, y_bottom_right, x_upper_left, color);
+  ILI9341_DrawHLine( x_upper_left, x_bottom_right, y_bottom_right, color);
+  ILI9341_DrawVLine( y_upper_left, y_bottom_right, x_bottom_right, color);
+  ILI9341_DrawHLine( x_upper_left, x_bottom_right, y_upper_left, color);
 }
 
 void ILI9341_FillRectangle( int16_t x_start, int16_t y_start, int16_t x_end, int16_t y_end, uint16_t color )
@@ -200,6 +275,195 @@ void ILI9341_FillRectangle( int16_t x_start, int16_t y_start, int16_t x_end, int
     ILI9341_SendData( data, 2u );
     total_pixels_to_write--;
   }
+}
+
+/**
+ * @brief Draws a Circle on ILI9341 LCD.
+ * 
+ * Draws a Circle on Glcd by using the specified parameters.
+ * <a href="https://en.wikipedia.org/wiki/Midpoint_circle_algorithm">
+ * Mid Point Circle Algorithm Weblink</a>
+ * 
+ * @param x_center: x coordinate of the circle center.
+ * @param y_center: y coordinate of the circle center.
+ * @param radius: radius of the circle.
+ * @param color: color parameter. Valid values in format RGB565
+ */
+void ILI9341_DrawCircle( int16_t x_center, int16_t y_center, int16_t radius, uint16_t color)
+{
+  int16_t x = radius;
+  int16_t y = 0;
+  int16_t err = 0;
+  int16_t temp1, temp2;
+  
+  while (x >= y)
+  {
+    temp1 = x_center + x;
+    temp2 = y_center + y;
+    if( (temp1 >=0) && (temp1 < lcd_width ) && \
+        (temp2 >= 0) && (temp2 < lcd_height) )
+    {
+      ILI9341_DrawPixel( temp1, temp2, color);
+    }
+    temp1 = x_center + y;
+    temp2 = y_center + x;
+    if( (temp1 >=0) && (temp1 < lcd_width) && \
+        (temp2 >= 0) && (temp2 < lcd_height) )
+    {
+      ILI9341_DrawPixel(temp1, temp2, color);
+    }
+    
+    temp1 = x_center - y;
+    temp2 = y_center + x;
+    if( (temp1 >=0) && (temp1 < lcd_width) && \
+        (temp2 >= 0) && (temp2 < lcd_height) )
+    {
+      ILI9341_DrawPixel(temp1, temp2, color);
+    }
+    
+    temp1 = x_center - x;
+    temp2 = y_center + y;
+    if( (temp1 >=0) && (temp1 < lcd_width) && \
+        (temp2 >= 0) && (temp2 < lcd_height) )
+    {
+      ILI9341_DrawPixel(temp1, temp2, color);
+    }
+    
+    temp1 = x_center - x;
+    temp2 = y_center - y;
+    if( (temp1 >=0) && (temp1 < lcd_width) && \
+        (temp2 >= 0) && (temp2 < lcd_height) )
+    {
+      ILI9341_DrawPixel(temp1, temp2, color);
+    }
+    
+    temp1 = x_center - y;
+    temp2 = y_center - x;
+    if( (temp1 >=0) && (temp1 < lcd_width) && \
+        (temp2 >= 0) && (temp2 < lcd_height) )
+    {
+      ILI9341_DrawPixel(temp1, temp2, color);
+    }
+    
+    temp1 = x_center + y;
+    temp2 = y_center - x;
+    if( (temp1 >=0) && (temp1 < lcd_width) && \
+        (temp2 >= 0) && (temp2 < lcd_height) )
+    {
+      ILI9341_DrawPixel(temp1, temp2, color);
+    }
+    
+    temp1 = x_center + x;
+    temp2 = y_center - y;
+    if( (temp1 >=0) && (temp1 < lcd_width) && \
+        (temp2 >= 0) && (temp2 < lcd_height) )
+    {
+      ILI9341_DrawPixel(temp1, temp2, color);
+    }
+    
+    y += 1;
+    err += 1 + 2*y;
+    if (2*(err-x) + 1 > 0)
+    {
+      x -= 1;
+      err += 1 - 2*x;
+    }
+  }
+}
+
+/**
+ * @brief Draws a line on LCD.
+ * 
+ * Draws a line on LCD by using the specified parameters.
+ * <a href="https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm">
+ * Algorithm Used</a>
+ * <a href="http://www.edaboard.com/thread68526.html#post302856"> Program Used
+ * </a>
+ * 
+ * @param x_start: x coordinate of start point.
+ * @param y_start: x coordinate of start point.
+ * @param x_end: x coordinate of end point.
+ * @param y_end: y coordinate of end point.
+ * @param color: color parameter.
+ */
+void ILI9341_DrawLine( int16_t x_start, int16_t y_start, \
+                       int16_t x_end, int16_t y_end, uint16_t color )
+{
+  int16_t x, y, addx, addy, dx, dy;
+  int32_t P;
+  int16_t i;
+  dx = abs((int16_t)(x_end - x_start));
+  dy = abs((int16_t)(y_end - y_start));
+  x = x_start;
+  y = y_start;
+  
+  if(x_start > x_end)
+    addx = -1;
+  else
+    addx = 1;
+  
+  if(y_start > y_end)
+    addy = -1;
+  else
+    addy = 1;
+  
+  if(dx >= dy)
+  {
+    P = 2*dy - dx;
+    
+    for(i=0; i<=dx; ++i)
+    {
+      ILI9341_DrawPixel( x, y, color );
+      if(P < 0)
+      {
+        P += 2*dy;
+        x += addx;
+      }
+      else
+      {
+        P += 2*dy - 2*dx;
+        x += addx;
+        y += addy;
+      }
+    }
+  }
+  else
+  {
+    P = 2*dx - dy;
+    for(i=0; i<=dy; ++i)
+    {
+      ILI9341_DrawPixel( x, y, color );
+      
+      if(P < 0)
+      {
+        P += 2*dx;
+        y += addy;
+      }
+      else
+      {
+        P += 2*dx - 2*dy;
+        x += addx;
+        y += addy;
+      }
+    }
+  }
+}
+
+void ILI9341_DrawHLine( int16_t x_start, int16_t y_start, int16_t width, uint16_t color )
+{
+  ILI9341_DrawLine( x_start, y_start, (x_start+width-1u), y_start, color);
+}
+
+void ILI9341_DrawVLine( int16_t x_start, int16_t y_start, int16_t height, uint16_t color )
+{
+  ILI9341_DrawLine( x_start, y_start, x_start, (y_start+height-1u), color);
+}
+
+void ILI9341_DrawTriangle( int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color)
+{
+  ILI9341_DrawLine(x0, y0, x1, y1, color);
+  ILI9341_DrawLine(x1, y1, x2, y2, color);
+  ILI9341_DrawLine(x2, y2, x0, y0, color);
 }
 
 

@@ -117,16 +117,36 @@
 #define ILI9341_3GAMMA_EN            0xF2U   /* 3 Gamma enable register */
 #define ILI9341_PRC                  0xF7U   /* Pump ratio control register */
 
+typedef enum _LCD_Orientation_e
+{
+  LCD_ORIENTATION_0 = 0,
+  LCD_PORTRAIT = LCD_ORIENTATION_0,
+  LCD_ORIENTATION_90,
+  LCD_LANDSCAPE = LCD_ORIENTATION_90,
+  LCD_ORIENTATION_180,
+  LCD_ORIENTATION_270,
+} LCD_Orientation_e;
+
 void ILI9341_Init( void );
+void ILI9341_SetOrientation( LCD_Orientation_e orientation );
+LCD_Orientation_e ILI9341_GetOrientation( void );
+uint16_t ILI9341_GetWidth( void );
+uint16_t ILI9341_GetHeight( void );
+
 void ILI9341_SendCommand( uint8_t command, uint8_t *data, uint32_t length );
 void ILI9341_SendData( uint8_t *data, uint32_t length );
+void ILI9341_Send_16BitData( uint16_t *data, uint32_t length );
+
 void ILI9341_SetWindow( uint16_t x_start, uint16_t y_start, uint16_t x_end, uint16_t y_end );
 void ILI9341_DrawPixel( uint16_t x, uint16_t y, uint16_t color );
 void ILI9341_Fill( uint16_t color );
+void ILI9341_Rectangle( int16_t x_upper_left, int16_t y_upper_left, int16_t x_bottom_right, int16_t y_bottom_right, uint16_t color);
 void ILI9341_FillRectangle( int16_t x_start, int16_t y_start, int16_t x_end, int16_t y_end, uint16_t color );
-
-void ILI9341_SetOrientation( uint8_t orientation );
-
-
+void ILI9341_DrawCircle( int16_t x_center, int16_t y_center, int16_t radius, uint16_t color);
+void ILI9341_DrawLine( int16_t x_start, int16_t y_start, int16_t x_end, int16_t y_end, uint16_t color );
+void ILI9341_DrawHLine( int16_t x_start, int16_t y_start, int16_t width, uint16_t color );
+void ILI9341_DrawVLine( int16_t x_start, int16_t y_start, int16_t height, uint16_t color );
+void ILI9341_DrawTriangle( int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
+void ILI9341_FillTriangle( int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
 
 #endif // _ILI9341_H_

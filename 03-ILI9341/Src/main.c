@@ -21,7 +21,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "ili9341.h"
+#include "tft.h"
+#include "lv_conf.h"
+#include "lvgl/lvgl.h"
+
+#include "lvgl/examples/lv_examples.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,6 +35,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define LED_1_TASK_TIME       (1000u) /* In milliseconds */
+#define LED_2_TASK_TIME       (1000u) /* In milliseconds */
+#define LVGL_TASK_TIME        (5u)    /* In milliseconds */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,14 +51,17 @@ SPI_HandleTypeDef hspi2;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
+uint8_t led_1_state = FALSE;
+uint8_t led_2_state = FALSE;
+uint32_t led_1_timestamp = 0u;
+uint32_t led_2_timestamp = 0u;
+uint32_t lvgl_timestamp = 0u;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -92,21 +102,65 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-  ILI9341_Init();
-  // ILI9341_DrawPixel( 0u, 0u, ILI9341_RED );
-  ILI9341_Fill( ILI9341_RED );
-  ILI9341_FillRectangle( 0u, 0u, 50u, 50u, ILI9341_WHITE );
-  ILI9341_FillRectangle( 50u, 50u, 100u, 100u, ILI9341_ORANGE );
-  ILI9341_FillRectangle( 100u, 100u, 150u, 150u, ILI9341_DARKGREEN );
+  lv_init();
+  tft_init();
+  HAL_Delay(100);
+  // lv_example_get_started_1();
+  lv_example_label_1();
+
+  led_1_state = FALSE;
+  led_2_state = FALSE;
+
+  lvgl_timestamp = HAL_GetTick();
+  led_1_timestamp = HAL_GetTick();
+  led_2_timestamp = HAL_GetTick();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_GPIO_TogglePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin );
-    HAL_GPIO_TogglePin( LED_RED_GPIO_Port, LED_RED_Pin );
-    HAL_Delay( 1000 );
+    /* Task for LVGL */
+    if( HAL_GetTick() - lvgl_timestamp > LVGL_TASK_TIME )
+    {
+      lvgl_timestamp = HAL_GetTick();
+      lv_timer_handler();
+    }
+
+    /* Task for Led 1 */
+    if( HAL_GetTick() - led_1_timestamp > LED_1_TASK_TIME )
+    {
+      led_1_timestamp = HAL_GetTick();
+      if( led_1_state )
+      {
+        led_1_state = FALSE;
+        /* Setting Pin High will turn off the Led */
+        HAL_GPIO_WritePin( LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET );
+      }
+      else
+      {
+        led_1_state = TRUE;
+        /* Setting Pin Low will turn on the Led */
+        HAL_GPIO_WritePin( LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET );
+      }
+    }
+    /* Task for Led 2 */
+    if( HAL_GetTick() - led_2_timestamp > LED_2_TASK_TIME )
+    {
+      led_2_timestamp = HAL_GetTick();
+      if( led_2_state )
+      {
+        led_2_state = FALSE;
+        /* Setting Pin High will turn off the Led */
+        HAL_GPIO_WritePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET );
+      }
+      else
+      {
+        led_2_state = TRUE;
+        /* Setting Pin Low will turn on the Led */
+        HAL_GPIO_WritePin( LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET );
+      }
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -165,7 +219,7 @@ void SystemClock_Config(void)
   * @param None
   * @retval None
   */
-static void MX_SPI2_Init(void)
+void MX_SPI2_Init(void)
 {
 
   /* USER CODE BEGIN SPI2_Init 0 */
@@ -276,6 +330,44 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+  * @brief SPI2 Initialization Function in 16-bit Mode
+  * @param None
+  * @retval None
+  */
+void MX_SPI2_16BitInit(void)
+{
+
+  /* USER CODE BEGIN SPI2_Init 0 */
+
+  /* USER CODE END SPI2_Init 0 */
+
+  /* USER CODE BEGIN SPI2_Init 1 */
+
+  /* USER CODE END SPI2_Init 1 */
+  /* SPI2 parameter configuration*/
+  hspi2.Instance = SPI2;
+  hspi2.Init.Mode = SPI_MODE_MASTER;
+  hspi2.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi2.Init.DataSize = SPI_DATASIZE_16BIT;
+  hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi2.Init.NSS = SPI_NSS_SOFT;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi2.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI2_Init 2 */
+
+  /* USER CODE END SPI2_Init 2 */
+
+}
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {

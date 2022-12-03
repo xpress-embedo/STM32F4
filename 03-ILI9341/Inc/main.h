@@ -50,6 +50,8 @@ extern "C" {
                                       x;  \
                                 } while(0)
 
+#define TRUE                    (0x01)
+#define FALSE                   (0x00)
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -72,8 +74,9 @@ void Error_Handler(void);
 #define DC_GPIO_Port GPIOD
 #define CS_Pin GPIO_PIN_11
 #define CS_GPIO_Port GPIOD
+void   MX_SPI2_Init(void);
 /* USER CODE BEGIN Private defines */
-
+void MX_SPI2_16BitInit( void );
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
