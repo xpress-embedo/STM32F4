@@ -121,17 +121,16 @@ void ILI9341_SendData( uint8_t *data, uint32_t length )
   CS_HIGH();
 }
 
-void ILI9341_Send_16BitData( uint16_t *data, uint32_t length )
+void ILI9341_Send_16BitData( uint16_t *data, uint16_t length )
 {
-  uint32_t idx = 0u;
+  uint16_t idx = 0u;
   uint8_t value[2] = { 0 };
   CS_LOW();
   DC_HIGH();
   for( idx=0; idx<length; idx++ )
   {
-    data[idx] = ILI9341_RED;
     value[0] = data[idx] >> 8u;
-    value[1] = data[idx] && 0xFF;
+    value[1] = data[idx] & 0xFF;
     HAL_SPI_Transmit( &hspi2, value, 2u, 10u );
   }
   CS_HIGH();
