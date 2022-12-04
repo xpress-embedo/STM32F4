@@ -8,12 +8,12 @@
 static lv_disp_drv_t disp_drv;
 
 // Private Functions
-static void tft_flush_slow(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p);
-static void tft_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p);
-static void monitor_cb(lv_disp_drv_t * d, uint32_t t, uint32_t p);
-static void disp_init( void );
+static void TFT_FlushSlow(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p);
+static void TFT_Flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p);
+static void Monitor_CB(lv_disp_drv_t * d, uint32_t t, uint32_t p);
+static void Display_Init( void );
 
-void tft_init( void )
+void TFT_Init( void )
 {
   // Draw Buffer (Second Buffer is Optional)
   // These are simple arrays used by LVGL to render the screen content.
@@ -31,19 +31,29 @@ void tft_init( void )
   lv_disp_drv_init( &disp_drv );
 
   // Initialize display
-  disp_init();
+  Display_Init();
 
   disp_drv.draw_buf = &buf;
-  disp_drv.flush_cb = tft_flush;
-  disp_drv.monitor_cb = monitor_cb;
+  disp_drv.flush_cb = TFT_Flush;
+  disp_drv.monitor_cb = Monitor_CB;
   disp_drv.hor_res = TFT_HOR_RES;
   disp_drv.ver_res = TFT_VER_RES;
   disp_drv.sw_rotate = 0;           // Set to one if wanted to rotate the screen
   lv_disp_drv_register(&disp_drv);
 }
 
+uint16_t TFT_GetWidth( void )
+{
+  return (ILI9341_GetWidth());
+}
+
+uint16_t TFT_GetHeight( void )
+{
+  return (ILI9341_GetHeight());
+}
+
 // This is slow flush function
-static void tft_flush_slow(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
+static void TFT_FlushSlow(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
 {
   uint16_t x, y;
   uint16_t temp2 = 0;
@@ -64,7 +74,7 @@ static void tft_flush_slow(lv_disp_drv_t * drv, const lv_area_t * area, lv_color
 }
 
 //Flush Function
-static void tft_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
+static void TFT_Flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
 {
   #define SPI_DATA_TRANSFER_8BIT        (0u)
   #define SPI_DATA_TRANSFER_16BIT       (1u)
@@ -117,12 +127,12 @@ static void tft_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * 
 }
 
 static volatile uint32_t t_saved = 0;
-void monitor_cb(lv_disp_drv_t * d, uint32_t t, uint32_t p )
+void Monitor_CB(lv_disp_drv_t * d, uint32_t t, uint32_t p )
 {
   t_saved = t;
 }
 
-static void disp_init( void )
+static void Display_Init( void )
 {
   ILI9341_Init();
   ILI9341_SetOrientation( LCD_LANDSCAPE );

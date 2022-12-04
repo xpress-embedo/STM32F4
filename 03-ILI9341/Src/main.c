@@ -64,7 +64,7 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void lvgl_vibgyor( void );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -105,10 +105,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_Delay(10);
   lv_init();
-  tft_init();
+  TFT_Init();
   HAL_Delay(10);
   // lv_example_get_started_1();
-  lv_example_label_1();
+  // lv_example_label_1();
+  lvgl_vibgyor();
 
   led_1_state = FALSE;
   led_2_state = FALSE;
@@ -220,11 +221,11 @@ static void MX_SPI2_Init(void)
 {
 
   /* USER CODE BEGIN SPI2_Init 0 */
-//
+
   /* USER CODE END SPI2_Init 0 */
 
   /* USER CODE BEGIN SPI2_Init 1 */
-//
+
   /* USER CODE END SPI2_Init 1 */
   /* SPI2 parameter configuration*/
   hspi2.Instance = SPI2;
@@ -327,49 +328,60 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+static void lvgl_vibgyor( void )
+{
+  lv_obj_t * V_rectangle;
+  lv_obj_t * I_rectangle;
+  lv_obj_t * B_rectangle;
+  lv_obj_t * G_rectangle;
+  lv_obj_t * Y_rectangle;
+  lv_obj_t * O_rectangle;
+  lv_obj_t * R_rectangle;
 
-/**
-  * @brief SPI2 Initialization Function in 16-bit Mode
-  * @param None
-  * @retval None
-  */
-//void MX_SPI2_16BitInit(void)
-//{
-//
-//  /* USER CODE BEGIN SPI2_Init 0 */
-//
-//  /* USER CODE END SPI2_Init 0 */
-//
-//  /* USER CODE BEGIN SPI2_Init 1 */
-//
-//  /* USER CODE END SPI2_Init 1 */
-//  /* SPI2 parameter configuration*/
-//  hspi2.Instance = SPI2;
-//  hspi2.Init.Mode = SPI_MODE_MASTER;
-//  hspi2.Init.Direction = SPI_DIRECTION_2LINES;
-//  hspi2.Init.DataSize = SPI_DATASIZE_16BIT;
-//  hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
-//  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
-//  hspi2.Init.NSS = SPI_NSS_SOFT;
-//  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
-//  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
-//  hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
-//  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-//  hspi2.Init.CRCPolynomial = 10;
-//  if (HAL_SPI_Init(&hspi2) != HAL_OK)
-//  {
-//    Error_Handler();
-//  }
-//  /* USER CODE BEGIN SPI2_Init 2 */
-//
-//  /* USER CODE END SPI2_Init 2 */
-//
-//}
-//
-//void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
-//{
-//  while(1);
-//}
+  lv_obj_t *act_scr = lv_scr_act();           // Get the active screen object
+  R_rectangle = lv_obj_create( act_scr );     // Create Rectangle Object
+  O_rectangle = lv_obj_create( act_scr );
+  Y_rectangle = lv_obj_create( act_scr );
+  G_rectangle = lv_obj_create( act_scr );
+  B_rectangle = lv_obj_create( act_scr );
+  I_rectangle = lv_obj_create( act_scr );
+  V_rectangle = lv_obj_create( act_scr );
+
+  // VIBGYOR are seven colors, height of display is 240, one color height is 240/7 = 34
+  lv_obj_set_size(R_rectangle, TFT_GetWidth(), 34u );
+  lv_obj_align(R_rectangle, LV_ALIGN_TOP_LEFT, 0, 0 );
+  lv_obj_set_style_bg_color( R_rectangle, lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN );
+
+  lv_obj_set_size(O_rectangle, TFT_GetWidth(), 34u );
+  // lv_obj_align_to(O_rectangle, R_rectangle, LV_ALIGN_TOP_LEFT, 0, 0);
+  lv_obj_align(O_rectangle, LV_ALIGN_TOP_LEFT, 0, 34u );
+  lv_obj_set_style_bg_color( O_rectangle, lv_palette_main(LV_PALETTE_ORANGE), LV_PART_MAIN );
+
+  lv_obj_set_size(Y_rectangle, TFT_GetWidth(), 34u );
+  // lv_obj_align_to(Y_rectangle, O_rectangle, LV_ALIGN_TOP_LEFT, 0, 0);
+  lv_obj_align(Y_rectangle, LV_ALIGN_TOP_LEFT, 0, 34u*2u );
+  lv_obj_set_style_bg_color( Y_rectangle, lv_palette_main(LV_PALETTE_YELLOW), LV_PART_MAIN );
+
+  lv_obj_set_size(G_rectangle, TFT_GetWidth(), 34u );
+  // lv_obj_align_to(G_rectangle, Y_rectangle, LV_ALIGN_TOP_LEFT, 0, 0);
+  lv_obj_align(G_rectangle, LV_ALIGN_TOP_LEFT, 0, 34u*3u );
+  lv_obj_set_style_bg_color( G_rectangle, lv_palette_main(LV_PALETTE_GREEN), LV_PART_MAIN );
+
+  lv_obj_set_size(B_rectangle, TFT_GetWidth(), 34u );
+  // lv_obj_align_to(B_rectangle, G_rectangle, LV_ALIGN_TOP_LEFT, 0, 0);
+  lv_obj_align(B_rectangle, LV_ALIGN_TOP_LEFT, 0, 34u*4u );
+  lv_obj_set_style_bg_color( B_rectangle, lv_palette_main(LV_PALETTE_BLUE), LV_PART_MAIN );
+
+  lv_obj_set_size(I_rectangle, TFT_GetWidth(), 34u );
+  // lv_obj_align_to(Y_rectangle, B_rectangle, LV_ALIGN_TOP_LEFT, 0, 0);
+  lv_obj_align(I_rectangle, LV_ALIGN_TOP_LEFT, 0, 34u*5u );
+  lv_obj_set_style_bg_color( I_rectangle, lv_palette_main(LV_PALETTE_INDIGO), LV_PART_MAIN );
+
+  lv_obj_set_size(V_rectangle, TFT_GetWidth(), 34u );
+  // lv_obj_align_to(V_rectangle, I_rectangle, LV_ALIGN_TOP_LEFT, 0, 0);
+  lv_obj_align(V_rectangle, LV_ALIGN_TOP_LEFT, 0, 34u*6u );
+  lv_obj_set_style_bg_color( V_rectangle, lv_palette_main(LV_PALETTE_DEEP_PURPLE), LV_PART_MAIN );
+}
 /* USER CODE END 4 */
 
 /**
