@@ -83,10 +83,10 @@ static void tft_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * 
   width = (area->x2 - area->x1) + 1;
 
   // Truncate the area to the screen*
-  int32_t act_x1 = area->x1 < 0 ? 0 : area->x1;
-  int32_t act_y1 = area->y1 < 0 ? 0 : area->y1;
-  int32_t act_x2 = area->x2 > TFT_HOR_RES - 1 ? TFT_HOR_RES - 1 : area->x2;
-  int32_t act_y2 = area->y2 > TFT_VER_RES - 1 ? TFT_VER_RES - 1 : area->y2;
+  uint16_t act_x1 = area->x1 < 0 ? 0 : area->x1;
+  uint16_t act_y1 = area->y1 < 0 ? 0 : area->y1;
+  uint16_t act_x2 = area->x2 > TFT_HOR_RES - 1 ? TFT_HOR_RES - 1 : area->x2;
+  uint16_t act_y2 = area->y2 > TFT_VER_RES - 1 ? TFT_VER_RES - 1 : area->y2;
 
   // calculate length of data to send over SPI (make sure to multiply by 2 if
   // sending in 8-bit SPI transfer, and also set LV_COLOR_16_SWAP to 1
@@ -125,7 +125,8 @@ void monitor_cb(lv_disp_drv_t * d, uint32_t t, uint32_t p )
 static void disp_init( void )
 {
   ILI9341_Init();
-  ILI9341_SetOrientation( LCD_ORIENTATION_180 );
+  ILI9341_SetOrientation( LCD_LANDSCAPE );
+  // ILI9341_SetOrientation( LCD_ORIENTATION_180 );
   // ILI9341_SetOrientation( LCD_PORTRAIT );
   // Some Test Code Starts
   // ILI9341_DrawPixel( 0u, 0u, ILI9341_RED );
