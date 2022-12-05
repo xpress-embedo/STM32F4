@@ -26,6 +26,7 @@
 #include "lvgl/lvgl.h"
 
 #include "lvgl/examples/lv_examples.h"
+#include "display_mng.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -38,6 +39,7 @@
 #define LED_1_TASK_TIME       (1000u) /* In milliseconds */
 #define LED_2_TASK_TIME       (1000u) /* In milliseconds */
 #define LVGL_TASK_TIME        (5u)    /* In milliseconds */
+#define DISP_MNG_TASK_TIME    (100u)  /* In milliseconds */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -56,6 +58,7 @@ uint8_t led_2_state = FALSE;
 uint32_t led_1_timestamp = 0u;
 uint32_t led_2_timestamp = 0u;
 uint32_t lvgl_timestamp = 0u;
+uint32_t disp_mng_timestamp = 0u;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,7 +67,7 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
-static void lvgl_vibgyor( void );
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -109,7 +112,6 @@ int main(void)
   HAL_Delay(10);
   // lv_example_get_started_1();
   // lv_example_label_1();
-  lvgl_vibgyor();
 
   led_1_state = FALSE;
   led_2_state = FALSE;
@@ -123,6 +125,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    /* Task Display Manager */
+    if( HAL_GetTick() - disp_mng_timestamp > DISP_MNG_TASK_TIME )
+    {
+      disp_mng_timestamp = HAL_GetTick();
+      display_mng();
+    }
+
     /* Task for LVGL */
     if( HAL_GetTick() - lvgl_timestamp > LVGL_TASK_TIME )
     {
@@ -328,60 +337,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-static void lvgl_vibgyor( void )
-{
-  lv_obj_t * V_rectangle;
-  lv_obj_t * I_rectangle;
-  lv_obj_t * B_rectangle;
-  lv_obj_t * G_rectangle;
-  lv_obj_t * Y_rectangle;
-  lv_obj_t * O_rectangle;
-  lv_obj_t * R_rectangle;
 
-  lv_obj_t *act_scr = lv_scr_act();           // Get the active screen object
-  R_rectangle = lv_obj_create( act_scr );     // Create Rectangle Object
-  O_rectangle = lv_obj_create( act_scr );
-  Y_rectangle = lv_obj_create( act_scr );
-  G_rectangle = lv_obj_create( act_scr );
-  B_rectangle = lv_obj_create( act_scr );
-  I_rectangle = lv_obj_create( act_scr );
-  V_rectangle = lv_obj_create( act_scr );
-
-  // VIBGYOR are seven colors, height of display is 240, one color height is 240/7 = 34
-  lv_obj_set_size(R_rectangle, TFT_GetWidth(), 34u );
-  lv_obj_align(R_rectangle, LV_ALIGN_TOP_LEFT, 0, 0 );
-  lv_obj_set_style_bg_color( R_rectangle, lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN );
-
-  lv_obj_set_size(O_rectangle, TFT_GetWidth(), 34u );
-  // lv_obj_align_to(O_rectangle, R_rectangle, LV_ALIGN_TOP_LEFT, 0, 0);
-  lv_obj_align(O_rectangle, LV_ALIGN_TOP_LEFT, 0, 34u );
-  lv_obj_set_style_bg_color( O_rectangle, lv_palette_main(LV_PALETTE_ORANGE), LV_PART_MAIN );
-
-  lv_obj_set_size(Y_rectangle, TFT_GetWidth(), 34u );
-  // lv_obj_align_to(Y_rectangle, O_rectangle, LV_ALIGN_TOP_LEFT, 0, 0);
-  lv_obj_align(Y_rectangle, LV_ALIGN_TOP_LEFT, 0, 34u*2u );
-  lv_obj_set_style_bg_color( Y_rectangle, lv_palette_main(LV_PALETTE_YELLOW), LV_PART_MAIN );
-
-  lv_obj_set_size(G_rectangle, TFT_GetWidth(), 34u );
-  // lv_obj_align_to(G_rectangle, Y_rectangle, LV_ALIGN_TOP_LEFT, 0, 0);
-  lv_obj_align(G_rectangle, LV_ALIGN_TOP_LEFT, 0, 34u*3u );
-  lv_obj_set_style_bg_color( G_rectangle, lv_palette_main(LV_PALETTE_GREEN), LV_PART_MAIN );
-
-  lv_obj_set_size(B_rectangle, TFT_GetWidth(), 34u );
-  // lv_obj_align_to(B_rectangle, G_rectangle, LV_ALIGN_TOP_LEFT, 0, 0);
-  lv_obj_align(B_rectangle, LV_ALIGN_TOP_LEFT, 0, 34u*4u );
-  lv_obj_set_style_bg_color( B_rectangle, lv_palette_main(LV_PALETTE_BLUE), LV_PART_MAIN );
-
-  lv_obj_set_size(I_rectangle, TFT_GetWidth(), 34u );
-  // lv_obj_align_to(Y_rectangle, B_rectangle, LV_ALIGN_TOP_LEFT, 0, 0);
-  lv_obj_align(I_rectangle, LV_ALIGN_TOP_LEFT, 0, 34u*5u );
-  lv_obj_set_style_bg_color( I_rectangle, lv_palette_main(LV_PALETTE_INDIGO), LV_PART_MAIN );
-
-  lv_obj_set_size(V_rectangle, TFT_GetWidth(), 34u );
-  // lv_obj_align_to(V_rectangle, I_rectangle, LV_ALIGN_TOP_LEFT, 0, 0);
-  lv_obj_align(V_rectangle, LV_ALIGN_TOP_LEFT, 0, 34u*6u );
-  lv_obj_set_style_bg_color( V_rectangle, lv_palette_main(LV_PALETTE_DEEP_PURPLE), LV_PART_MAIN );
-}
 /* USER CODE END 4 */
 
 /**
