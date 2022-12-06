@@ -129,7 +129,7 @@ int main(void)
     if( HAL_GetTick() - disp_mng_timestamp > DISP_MNG_TASK_TIME )
     {
       disp_mng_timestamp = HAL_GetTick();
-      display_mng();
+      Display_Mng();
     }
 
     /* Task for LVGL */
