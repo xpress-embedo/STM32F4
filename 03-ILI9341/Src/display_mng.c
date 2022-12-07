@@ -42,6 +42,7 @@ static lv_obj_t *slider_r;
 static lv_obj_t *slider_g;
 static lv_obj_t *slider_b;
 static lv_obj_t *rectangle;
+static uint8_t prev_red_value, prev_green_value, prev_blue_value;
 
 static void Display_Vibgyor( void );
 static void Display_RGBMixer( void );
@@ -51,6 +52,8 @@ static void Slider_DummyCallback( RGB_Mixer_s *user_data, int32_t slider_value )
 void Display_Mng( void )
 {
   static uint32_t wait_time = 0u;
+  uint8_t cur_red_value, cur_green_value, cur_blue_value;
+
   switch( disp_state )
   {
     case DISP_STATE_VIBGYOR:
@@ -70,13 +73,27 @@ void Display_Mng( void )
       disp_state = DISP_STATE_END;
       break;
     case DISP_STATE_END:
-      // dummy code
-//      red.slider_type = SLIDER_TYPE_RED;
-//      green.slider_type = SLIDER_TYPE_GREEN;
-//      blue.slider_type = SLIDER_TYPE_BLUE;
-      Slider_DummyCallback( &red, 255 );
-      Slider_DummyCallback( &green, 10 );
-      Slider_DummyCallback( &blue, 255 );
+      cur_red_value = Slider_GetCounts( (uint8_t)SLIDER_TYPE_RED );
+      cur_green_value = Slider_GetCounts( (uint8_t)SLIDER_TYPE_GREEN );
+      cur_blue_value = Slider_GetCounts( (uint8_t)SLIDER_TYPE_BLUE );
+      // Update for RED Slider
+      if( cur_red_value != prev_red_value )
+      {
+        prev_red_value = cur_red_value;
+        Slider_DummyCallback( &red, cur_red_value );
+      }
+      // Update for Green Slider
+      if( cur_green_value != prev_green_value )
+      {
+        prev_green_value = cur_green_value;
+        Slider_DummyCallback( &green, cur_green_value );
+      }
+      // Update for Blue Slider
+      if( cur_blue_value != prev_blue_value )
+      {
+        prev_blue_value = cur_blue_value;
+        Slider_DummyCallback( &blue, cur_blue_value );
+      }
       break;
     default:
       // don't do anything here

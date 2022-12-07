@@ -133,8 +133,8 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   HAL_Delay(10);
-  // lv_init();
-  // TFT_Init();
+   lv_init();
+   TFT_Init();
   // HAL_Delay(10);
   // lv_example_get_started_1();
   // lv_example_label_1();
@@ -160,10 +160,11 @@ int main(void)
       trig_adc_conv_timestamp = HAL_GetTick();
       if( adc_busy == TRUE )
       {
-        memset( dbg_buffer, 0x00, DEBUG_BUFFER_SIZE );
-        dbg_size = snprintf(dbg_buffer, DEBUG_BUFFER_SIZE, "Red = %d, Green = %d, Blue = %d \r\n", adc_data[0], adc_data[1], adc_data[2] );
-        HAL_UART_Transmit(&huart2, (uint8_t*)dbg_buffer, dbg_size, 1000u);
+        // memset( dbg_buffer, 0x00, DEBUG_BUFFER_SIZE );
+        // dbg_size = snprintf(dbg_buffer, DEBUG_BUFFER_SIZE, "Red = %d, Green = %d, Blue = %d \r\n", adc_data[0], adc_data[1], adc_data[2] );
+        // HAL_UART_Transmit(&huart2, (uint8_t*)dbg_buffer, dbg_size, 1000u);
         adc_busy = FALSE;
+        // Trigger Conversion Again
         HAL_ADC_Start_IT(&hadc1);
       }
     }
@@ -172,20 +173,21 @@ int main(void)
     if( HAL_GetTick() - debug_print_timestamp > DEBUG_PRINT_TASK_TIME )
     {
       debug_print_timestamp = HAL_GetTick();
+      // TODO: XS for future
     }
 
     /* Task Display Manager */
     if( HAL_GetTick() - disp_mng_timestamp > DISP_MNG_TASK_TIME )
     {
       disp_mng_timestamp = HAL_GetTick();
-      // Display_Mng();
+      Display_Mng();
     }
 
     /* Task for LVGL */
     if( HAL_GetTick() - lvgl_timestamp > LVGL_TASK_TIME )
     {
       lvgl_timestamp = HAL_GetTick();
-      // lv_timer_handler();
+      lv_timer_handler();
     }
 
     /* Task for Led 1 */
