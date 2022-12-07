@@ -31,15 +31,28 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef enum _ADC_Index_e
+{
+  ADC_IDX_0 = 0,
+  ADC_IDX_1,
+  ADC_IDX_2,
+  ADC_IDX_MAX,
+} ADC_Index_e;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define LED_1_TASK_TIME       (1000u) /* In milliseconds */
-#define LED_2_TASK_TIME       (1000u) /* In milliseconds */
-#define LVGL_TASK_TIME        (5u)    /* In milliseconds */
-#define DISP_MNG_TASK_TIME    (100u)  /* In milliseconds */
+#define DEBUG_BUFFER_SIZE         (50u)
+#define RED_SLIDER_IDX            (0u)
+#define GREEN_SLIDER_IDX          (1u)
+#define BLUE_SLIDER_IDX           (2u)
+
+#define LED_1_TASK_TIME           (1000u) /* In milliseconds */
+#define LED_2_TASK_TIME           (1000u) /* In milliseconds */
+#define LVGL_TASK_TIME            (5u)    /* In milliseconds */
+#define DISP_MNG_TASK_TIME        (100u)  /* In milliseconds */
+#define TRIG_ADC_CONV_TASK_TIME   (100u)  /* In milliseconds */
+#define DEBUG_PRINT_TASK_TIME     (1000u) /* In milliseconds */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,17 +61,28 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+
 SPI_HandleTypeDef hspi2;
 
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint8_t led_1_state = FALSE;
-uint8_t led_2_state = FALSE;
-uint32_t led_1_timestamp = 0u;
-uint32_t led_2_timestamp = 0u;
-uint32_t lvgl_timestamp = 0u;
-uint32_t disp_mng_timestamp = 0u;
+static uint8_t led_1_state = FALSE;
+static uint8_t led_2_state = FALSE;
+static uint32_t led_1_timestamp = 0u;
+static uint32_t led_2_timestamp = 0u;
+static uint32_t lvgl_timestamp = 0u;
+static uint32_t disp_mng_timestamp = 0u;
+static uint32_t trig_adc_conv_timestamp = 0u;
+static uint32_t debug_print_timestamp = 0u;
+
+static uint8_t adc_data[ADC_IDX_MAX] = { 0x00 };
+static uint8_t adc_data_idx = ADC_IDX_0;
+static uint8_t adc_busy = FALSE;
+
+uint16_t dbg_size = 0u;
+char dbg_buffer[DEBUG_BUFFER_SIZE] = { 0 };
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,6 +90,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_SPI2_Init(void);
+static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -105,13 +130,15 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_SPI2_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   HAL_Delay(10);
-  lv_init();
-  TFT_Init();
-  HAL_Delay(10);
+  // lv_init();
+  // TFT_Init();
+  // HAL_Delay(10);
   // lv_example_get_started_1();
   // lv_example_label_1();
+  HAL_ADC_Start_IT(&hadc1);
 
   led_1_state = FALSE;
   led_2_state = FALSE;
@@ -119,24 +146,46 @@ int main(void)
   lvgl_timestamp = HAL_GetTick();
   led_1_timestamp = HAL_GetTick();
   led_2_timestamp = HAL_GetTick();
+  trig_adc_conv_timestamp = HAL_GetTick();
+  debug_print_timestamp = HAL_GetTick();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    /* Task for Triggering ADC Conversion Start */
+    if( HAL_GetTick() - trig_adc_conv_timestamp > TRIG_ADC_CONV_TASK_TIME )
+    {
+      trig_adc_conv_timestamp = HAL_GetTick();
+      if( adc_busy == TRUE )
+      {
+        memset( dbg_buffer, 0x00, DEBUG_BUFFER_SIZE );
+        dbg_size = snprintf(dbg_buffer, DEBUG_BUFFER_SIZE, "Red = %d, Green = %d, Blue = %d \r\n", adc_data[0], adc_data[1], adc_data[2] );
+        HAL_UART_Transmit(&huart2, (uint8_t*)dbg_buffer, dbg_size, 1000u);
+        adc_busy = FALSE;
+        HAL_ADC_Start_IT(&hadc1);
+      }
+    }
+
+    /* Task for Printing debug information */
+    if( HAL_GetTick() - debug_print_timestamp > DEBUG_PRINT_TASK_TIME )
+    {
+      debug_print_timestamp = HAL_GetTick();
+    }
+
     /* Task Display Manager */
     if( HAL_GetTick() - disp_mng_timestamp > DISP_MNG_TASK_TIME )
     {
       disp_mng_timestamp = HAL_GetTick();
-      Display_Mng();
+      // Display_Mng();
     }
 
     /* Task for LVGL */
     if( HAL_GetTick() - lvgl_timestamp > LVGL_TASK_TIME )
     {
       lvgl_timestamp = HAL_GetTick();
-      lv_timer_handler();
+      // lv_timer_handler();
     }
 
     /* Task for Led 1 */
@@ -219,6 +268,58 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
+  hadc1.Init.Resolution = ADC_RESOLUTION_8B;
+  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_0;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**
@@ -337,7 +438,73 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+/**
+  * @brief  Regular conversion complete callback in non blocking mode
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
+  *         the configuration information for the specified ADC.
+  * @retval None
+  */
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+  ADC_ChannelConfTypeDef adc_config = { 0 };
+  // if( hadc == &hadc1)
 
+  // Save the ADC data in the array
+  if( adc_data_idx < ADC_IDX_MAX )
+  {
+    adc_data[adc_data_idx] = HAL_ADC_GetValue(hadc);
+  }
+
+  // Reconfigure the channel
+  switch( adc_data_idx )
+  {
+    case ADC_IDX_0:
+      // if 0 is configured then configure 1 next
+      adc_config.Channel = ADC_CHANNEL_1;
+      adc_data_idx = ADC_IDX_1;
+      break;
+    case ADC_IDX_1:
+      adc_config.Channel = ADC_CHANNEL_7;
+      adc_data_idx = ADC_IDX_2;
+      break;
+    case ADC_IDX_2:
+      adc_config.Channel = ADC_CHANNEL_0;
+      adc_data_idx = ADC_IDX_0;
+      break;
+    default:
+      break;
+  };
+
+  adc_config.Rank = 1;
+  adc_config.SamplingTime = ADC_SAMPLETIME_28CYCLES;
+
+  HAL_ADC_ConfigChannel(&hadc1, &adc_config);
+  // this means that one cycle is completed
+  if( adc_data_idx == ADC_IDX_0 )
+  {
+    // one cycle is complete and next triggering will be done from the main loop
+    adc_busy = TRUE;
+  }
+  // if one cycle is not completed, then continue triggering the ADC conversion
+  else
+  {
+    // triggering will be done in while loop
+    HAL_ADC_Start_IT( hadc );
+  }
+}
+
+uint8_t Slider_GetCounts( uint8_t slider_type )
+{
+  uint8_t slider_value = 0u;
+  if( slider_type < ADC_IDX_MAX )
+  {
+    __disable_irq();
+    // Make Sure that Slider type index must match with the ADC Channel/Data Index
+    slider_value = adc_data[ slider_type ];
+    __enable_irq();
+  }
+  return slider_value;
+}
 /* USER CODE END 4 */
 
 /**

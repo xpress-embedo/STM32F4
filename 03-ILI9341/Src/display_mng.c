@@ -9,10 +9,10 @@
 #include "tft.h"
 #include "lvgl/lvgl.h"
 
-#include <stdio.h>
-uint32_t dbg_size = 0u;
-char dbg_buff[100] = { 0 };
-extern UART_HandleTypeDef huart2;
+//#include <stdio.h>
+//uint32_t dbg_size = 0u;
+//char dbg_buff[100] = { 0 };
+//extern UART_HandleTypeDef huart2;
 
 typedef enum _Display_State_e
 {

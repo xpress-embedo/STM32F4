@@ -31,7 +31,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -64,19 +64,25 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define USER_BUTTON_Pin GPIO_PIN_13
 #define USER_BUTTON_GPIO_Port GPIOC
+#define RED_SLIDER_Pin GPIO_PIN_0
+#define RED_SLIDER_GPIO_Port GPIOA
+#define GREEN_SLIDER_Pin GPIO_PIN_1
+#define GREEN_SLIDER_GPIO_Port GPIOA
 #define LED_GREEN_Pin GPIO_PIN_4
 #define LED_GREEN_GPIO_Port GPIOA
 #define LED_RED_Pin GPIO_PIN_5
 #define LED_RED_GPIO_Port GPIOA
 #define USER_LED_Pin GPIO_PIN_6
 #define USER_LED_GPIO_Port GPIOA
+#define BLUE_SLIDER_Pin GPIO_PIN_7
+#define BLUE_SLIDER_GPIO_Port GPIOA
 #define DC_Pin GPIO_PIN_9
 #define DC_GPIO_Port GPIOD
 #define CS_Pin GPIO_PIN_11
 #define CS_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
-void MX_SPI2_16BitInit( void );
+uint8_t Slider_GetCounts( uint8_t slider_type );
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
