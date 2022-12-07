@@ -27,7 +27,13 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef enum _ADC_Index_e
+{
+  ADC_IDX_0 = 0,
+  ADC_IDX_1,
+  ADC_IDX_2,
+  ADC_IDX_MAX,
+} ADC_Index_e;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -47,6 +53,9 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 uint16_t dbg_size = 0u;
 char dbg_buffer[DEBUG_BUFFER_SIZE] = { 0 };
+static uint8_t adc_data[ADC_IDX_MAX] = { 0x00 };
+static uint8_t adc_data_idx = ADC_IDX_0;
+static uint8_t adc_busy = 0x00;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -94,13 +103,26 @@ int main(void)
   MX_ADC1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_ADC_Start_IT(&hadc1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    // This is Interrupt start code ... start
+    if( adc_busy )
+    {
+      memset( dbg_buffer, 0x00, DEBUG_BUFFER_SIZE );
+      dbg_size = snprintf(dbg_buffer, DEBUG_BUFFER_SIZE, "Red = %d, Green = %d, Blue = %d \r\n", adc_data[0], adc_data[1], adc_data[2] );
+      HAL_UART_Transmit(&huart2, (uint8_t*)dbg_buffer, dbg_size, 1000u);
+      adc_busy = 0x00;
+      HAL_Delay(500);
+      HAL_ADC_Start_IT(&hadc1);
+    }
+    // Above is the Interrupt start code .... end
+
+    /* Below is the ADC Example with polling method
     uint8_t red_adc = 0;
     uint8_t green_adc = 0;
     uint8_t blue_adc = 0;
@@ -146,6 +168,7 @@ int main(void)
     HAL_UART_Transmit(&huart2, (uint8_t*)dbg_buffer, dbg_size, 1000u);
 
     HAL_Delay(1000);
+    */
 
     /* USER CODE END WHILE */
 
@@ -294,7 +317,60 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+/**
+  * @brief  Regular conversion complete callback in non blocking mode
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
+  *         the configuration information for the specified ADC.
+  * @retval None
+  */
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+  ADC_ChannelConfTypeDef adc_config = { 0 };
+  // if( hadc == &hadc1)
 
+  // Save the ADC data in the array
+  if( adc_data_idx < ADC_IDX_MAX )
+  {
+    adc_data[adc_data_idx] = HAL_ADC_GetValue(hadc);
+  }
+
+  // Reconfigure the channel
+  switch( adc_data_idx )
+  {
+    case ADC_IDX_0:
+      // if 0 is configured then configure 1 next
+      adc_config.Channel = ADC_CHANNEL_1;
+      adc_data_idx = ADC_IDX_1;
+      break;
+    case ADC_IDX_1:
+      adc_config.Channel = ADC_CHANNEL_7;
+      adc_data_idx = ADC_IDX_2;
+      break;
+    case ADC_IDX_2:
+      adc_config.Channel = ADC_CHANNEL_0;
+      adc_data_idx = ADC_IDX_0;
+      break;
+    default:
+      break;
+  };
+
+  adc_config.Rank = 1;
+  adc_config.SamplingTime = ADC_SAMPLETIME_28CYCLES;
+
+  HAL_ADC_ConfigChannel(&hadc1, &adc_config);
+  // this means that one cycle is completed
+  if( adc_data_idx == ADC_IDX_0 )
+  {
+    // one cycle is complete and next triggering will be done from the main loop
+    adc_busy = 0x01;
+  }
+  // if one cycle is not completed, then continue triggering the ADC conversion
+  else
+  {
+    // triggering will be done in while loop
+    HAL_ADC_Start_IT( hadc );
+  }
+}
 /* USER CODE END 4 */
 
 /**
