@@ -30,7 +30,9 @@
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-void tft_init(void);
+void TFT_Init(void);
+uint16_t TFT_GetWidth( void );
+uint16_t TFT_GetHeight( void );
 
 /**********************
  *      MACROS

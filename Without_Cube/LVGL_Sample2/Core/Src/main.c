@@ -127,7 +127,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   MX_LED_GPIO_Init();
   lv_init();
-  tft_init();
+  TFT_Init();
   touchpad_init();
 
   // rotate the display

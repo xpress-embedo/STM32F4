@@ -120,7 +120,7 @@ void monitor_cb(lv_disp_drv_t * d, uint32_t t, uint32_t p)
 /**
  * Initialize your display here
  */
-void tft_init(void)
+void TFT_Init(void)
 {
 	static lv_color_t disp_buf1[TFT_HOR_RES * 15];
 	static lv_color_t disp_buf2[TFT_HOR_RES * 15];
@@ -141,6 +141,16 @@ void tft_init(void)
 	disp_drv.ver_res = 320;
 	disp_drv.sw_rotate = 1;
 	lv_disp_drv_register(&disp_drv);
+}
+
+uint16_t TFT_GetWidth( void )
+{
+  return (uint16_t)(lv_disp_get_hor_res( NULL ));
+}
+
+uint16_t TFT_GetHeight( void )
+{
+  return (uint16_t)(lv_disp_get_ver_res( NULL ));
 }
 
 /**********************

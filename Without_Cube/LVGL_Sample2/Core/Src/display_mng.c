@@ -33,7 +33,7 @@ typedef struct _RGB_Mixer_s
 } RGB_Mixer_s;
 
 // Private Variables
-static Display_State_e disp_state = DISP_STATE_TEMP_SENSOR; //DISP_STATE_VIBGYOR;
+static Display_State_e disp_state = DISP_STATE_VIBGYOR;
 static RGB_Mixer_s red, green, blue;
 static lv_obj_t *rectangle;
 // for temperature chart
@@ -284,7 +284,7 @@ static void Slider_Callback( lv_event_t *e )
   // are specified
 
   //
-  if( (red == 127) && (green == 127) && (blue == 127) )
+  if( (red == 255) && (green == 255) && (blue == 255) )
   {
     disp_state = DISP_STATE_TEMP_SENSOR;
   }
@@ -293,6 +293,9 @@ static void Slider_Callback( lv_event_t *e )
 static void Display_TemperatureChart( void )
 {
   uint16_t idx = 0u;
+  // this should match with the temperature buffer length
+  uint16_t chart_hor_res = lv_disp_get_hor_res(NULL) - 60;
+  uint16_t chart_ver_res = lv_disp_get_ver_res(NULL) - 40;
   uint8_t *data = Display_GetTempData();
 
   lv_obj_clean( lv_scr_act() );                         // Clean the screen
@@ -304,20 +307,21 @@ static void Display_TemperatureChart( void )
   lv_obj_t * lbl_title = lv_label_create( lv_scr_act() );
   lv_label_set_text( lbl_title, "Temperature Graph");
   lv_obj_set_style_text_align( lbl_title, LV_TEXT_ALIGN_CENTER, 0);
-  // lv_obj_align(label1, LV_ALIGN_CENTER, 0, -40);
+  lv_obj_align( lbl_title, LV_ALIGN_TOP_MID, 0, 0 );
 
   // Set the chart size (Size should be set properly because we wanted to display
   // chart title and some data on y-axis also)
   // display is 320x240
-  lv_obj_set_size( chart, 260, 200 );
+  lv_obj_set_size( chart, chart_hor_res, chart_ver_res );
   // TODO: XS I don't want to center it, will check later
   // lv_obj_center( chart );
-  lv_obj_align( chart, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+  lv_obj_align( chart, LV_ALIGN_CENTER, LV_PCT(5), 0 );
+  // lv_obj_align( chart, LV_ALIGN_BOTTOM_RIGHT, 0, 0 );
 
   // Set Chart Type to Line Chart
   lv_chart_set_type( chart, LV_CHART_TYPE_LINE );
   // By Default the number of points are 10, update it to chart width
-  lv_chart_set_point_count( chart, 260 );
+  lv_chart_set_point_count( chart, chart_hor_res );
   // Update mode shift or circular, here shift is selected
   lv_chart_set_update_mode( chart, LV_CHART_UPDATE_MODE_SHIFT );
   // Specify Vertical Range
@@ -331,9 +335,9 @@ static void Display_TemperatureChart( void )
   lv_chart_set_axis_tick(chart, LV_CHART_AXIS_PRIMARY_Y, 10, 5, 10, 2, true, 50);
 
   // Add Data Series
-  temp_series = lv_chart_add_series(chart, lv_palette_main(LV_PALETTE_GREEN), LV_CHART_AXIS_PRIMARY_Y);
+  temp_series = lv_chart_add_series(chart, lv_palette_main(LV_PALETTE_RED), LV_CHART_AXIS_PRIMARY_Y);
 
-  for( idx=0; idx<260; idx++ )
+  for( idx=0; idx<chart_hor_res; idx++ )
   {
     temp_series->y_points[idx] = (lv_coord_t)*(data+idx);
   }
@@ -345,8 +349,10 @@ static void Display_TemperatureChartRefresh( void )
 {
   uint16_t idx = 0u;
   uint8_t *data = Display_GetTempData();
+  // this should match with the temperature buffer length
+  uint16_t chart_hor_res = lv_disp_get_hor_res(NULL) - 60;
 
-  for( idx=0; idx<260; idx++ )
+  for( idx=0; idx<chart_hor_res; idx++ )
   {
     temp_series->y_points[idx] = (lv_coord_t)*(data+idx);
   }
