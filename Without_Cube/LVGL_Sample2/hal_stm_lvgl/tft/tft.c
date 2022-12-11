@@ -139,6 +139,7 @@ void tft_init(void)
 	disp_drv.monitor_cb = monitor_cb;
 	disp_drv.hor_res = 240;
 	disp_drv.ver_res = 320;
+	disp_drv.sw_rotate = 1;
 	lv_disp_drv_register(&disp_drv);
 }
 

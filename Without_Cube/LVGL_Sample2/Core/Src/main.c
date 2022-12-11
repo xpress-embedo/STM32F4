@@ -86,6 +86,7 @@ static void MX_ADC1_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 static void LTDC_Clock_Init( void );
+static void MX_LED_GPIO_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -124,12 +125,16 @@ int main(void)
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  MX_LED_GPIO_Init();
   lv_init();
   tft_init();
   touchpad_init();
 
+  // rotate the display
+  lv_disp_set_rotation( lv_disp_get_default(), LV_DISP_ROT_270 );
+
   // lv_example_label_1();
-  lv_example_btn_1();
+  // lv_example_btn_1();
   // lv_example_scroll_1();
 
   // Start ADC Conversion
@@ -412,6 +417,35 @@ static void MX_USART1_UART_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_LED_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOG_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOG, LD3_Pin|LD4_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : LD3_Pin LD4_Pin */
+  GPIO_InitStruct.Pin = LD3_Pin|LD4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+}
+
+uint8_t * Display_GetTempData( void )
+{
+  return temp_sensor_1sec;
+}
+
 /**
   * @brief  This function generated the 6.25 MHz Clock for LTDC peripheral
   *         Ideally this piece of code should be the part of the
