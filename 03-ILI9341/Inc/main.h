@@ -76,13 +76,17 @@ void Error_Handler(void);
 #define USER_LED_GPIO_Port GPIOA
 #define BLUE_SLIDER_Pin GPIO_PIN_7
 #define BLUE_SLIDER_GPIO_Port GPIOA
+#define TEMP_SENS_Pin GPIO_PIN_0
+#define TEMP_SENS_GPIO_Port GPIOB
 #define DC_Pin GPIO_PIN_9
 #define DC_GPIO_Port GPIOD
 #define CS_Pin GPIO_PIN_11
 #define CS_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
-uint8_t Slider_GetCounts( uint8_t slider_type );
+uint8_t Display_GetSliderCounts( uint8_t slider_type );
+uint8_t * Display_GetTempData( void );
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

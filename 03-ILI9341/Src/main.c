@@ -33,9 +33,11 @@
 /* USER CODE BEGIN PTD */
 typedef enum _ADC_Index_e
 {
-  ADC_IDX_0 = 0,
-  ADC_IDX_1,
-  ADC_IDX_2,
+  SLIDER_ADC_IDX_0 = 0,
+  SLIDER_ADC_IDX_1,
+  SLIDER_ADC_IDX_2,
+  TEMP_ADC_IDX,
+  SLIDER_ADC_IDX_MAX = TEMP_ADC_IDX,
   ADC_IDX_MAX,
 } ADC_Index_e;
 /* USER CODE END PTD */
@@ -78,8 +80,15 @@ static uint32_t trig_adc_conv_timestamp = 0u;
 static uint32_t debug_print_timestamp = 0u;
 
 static uint8_t adc_data[ADC_IDX_MAX] = { 0x00 };
-static uint8_t adc_data_idx = ADC_IDX_0;
+static uint8_t adc_data_idx = SLIDER_ADC_IDX_0;
 static uint8_t adc_busy = FALSE;
+// ADC Triggering Task Time is 100ms, this means that to get 1 second counts
+// we need to store 10 samples which are 100ms apart from each other
+static uint8_t temp_sensor[10u] = { 0x00 };
+static uint8_t temp_sensor_idx = 0u;
+// the above samples are averaged and stored in the below array
+static uint8_t temp_sensor_1sec[260] = { 0 };   // 320-60
+static uint16_t temp_sensor_1sec_idx = 0u;
 
 uint16_t dbg_size = 0u;
 char dbg_buffer[DEBUG_BUFFER_SIZE] = { 0 };
@@ -107,7 +116,8 @@ static void MX_ADC1_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  uint32_t idx = 0u;
+  uint32_t temp = 0u;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -133,8 +143,8 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   HAL_Delay(10);
-   lv_init();
-   TFT_Init();
+  lv_init();
+  TFT_Init();
   // HAL_Delay(10);
   // lv_example_get_started_1();
   // lv_example_label_1();
@@ -162,10 +172,55 @@ int main(void)
       {
         // memset( dbg_buffer, 0x00, DEBUG_BUFFER_SIZE );
         // dbg_size = snprintf(dbg_buffer, DEBUG_BUFFER_SIZE, "Red = %d, Green = %d, Blue = %d \r\n", adc_data[0], adc_data[1], adc_data[2] );
+        // dbg_size = snprintf(dbg_buffer, DEBUG_BUFFER_SIZE, "Temp.=%d, Idx=%d, millis=%ld\r\n", adc_data[3], temp_sensor_idx, HAL_GetTick() );
         // HAL_UART_Transmit(&huart2, (uint8_t*)dbg_buffer, dbg_size, 1000u);
+
+        if( temp_sensor_idx < 10u )
+        {
+          // store the data in buffer
+          temp_sensor[temp_sensor_idx] = adc_data[3];
+          temp_sensor_idx++;
+          // this means that 1 second is elapsed and the buffer is full now
+          if( temp_sensor_idx >= 10u )
+          {
+            // reset the counter
+            temp_sensor_idx = 0u;
+            // now average the samples and store in 1 second array
+            temp = 0u;
+            // cumulative sum
+            for( idx=0; idx<10u; idx++ )
+            {
+              temp = temp + temp_sensor[idx];
+            }
+            // averaging
+            temp = temp/10u;
+            if( temp_sensor_1sec_idx < 260u )
+            {
+              // convert data to temperature and store in array
+              temp = (uint8_t)((uint16_t)((uint16_t)temp * (uint16_t)330)/255);
+              temp_sensor_1sec[temp_sensor_1sec_idx] = (uint8_t)(temp);
+              memset( dbg_buffer, 0x00, DEBUG_BUFFER_SIZE );
+              dbg_size = snprintf(dbg_buffer, DEBUG_BUFFER_SIZE, "Index = %d, Temperature = %ld\r\n", temp_sensor_1sec_idx, temp );
+              HAL_UART_Transmit(&huart2, (uint8_t*)dbg_buffer, dbg_size, 1000u);
+              temp_sensor_1sec_idx++;
+              if( temp_sensor_1sec_idx >= 260u )
+              {
+                // reset the index if buffer is full
+                temp_sensor_1sec_idx = 0u;
+              }
+            }
+          }
+        }
+
         adc_busy = FALSE;
         // Trigger Conversion Again
         HAL_ADC_Start_IT(&hadc1);
+      }
+      else
+      {
+        // memset( dbg_buffer, 0x00, DEBUG_BUFFER_SIZE );
+        // dbg_size = snprintf(dbg_buffer, DEBUG_BUFFER_SIZE, "%s\r\n", "ADC Busy Shouldn't Happen" );
+        // HAL_UART_Transmit(&huart2, (uint8_t*)dbg_buffer, dbg_size, 1000u);
       }
     }
 
@@ -180,7 +235,10 @@ int main(void)
     if( HAL_GetTick() - disp_mng_timestamp > DISP_MNG_TASK_TIME )
     {
       disp_mng_timestamp = HAL_GetTick();
+      // memset( dbg_buffer, 0x00, DEBUG_BUFFER_SIZE );
       Display_Mng();
+      // dbg_size = snprintf(dbg_buffer, DEBUG_BUFFER_SIZE, "Display Mng Time=%ld\r\n", HAL_GetTick() - disp_mng_timestamp );
+      // HAL_UART_Transmit(&huart2, (uint8_t*)dbg_buffer, dbg_size, 1000u);
     }
 
     /* Task for LVGL */
@@ -460,19 +518,22 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
   // Reconfigure the channel
   switch( adc_data_idx )
   {
-    case ADC_IDX_0:
+    case SLIDER_ADC_IDX_0:
       // if 0 is configured then configure 1 next
       adc_config.Channel = ADC_CHANNEL_1;
-      adc_data_idx = ADC_IDX_1;
+      adc_data_idx = SLIDER_ADC_IDX_1;
       break;
-    case ADC_IDX_1:
+    case SLIDER_ADC_IDX_1:
       adc_config.Channel = ADC_CHANNEL_7;
-      adc_data_idx = ADC_IDX_2;
+      adc_data_idx = SLIDER_ADC_IDX_2;
       break;
-    case ADC_IDX_2:
+    case SLIDER_ADC_IDX_2:
+      adc_config.Channel = ADC_CHANNEL_8;
+      adc_data_idx = TEMP_ADC_IDX;
+      break;
+    case TEMP_ADC_IDX:
       adc_config.Channel = ADC_CHANNEL_0;
-      adc_data_idx = ADC_IDX_0;
-      break;
+      adc_data_idx = SLIDER_ADC_IDX_0;
     default:
       break;
   };
@@ -482,7 +543,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 
   HAL_ADC_ConfigChannel(&hadc1, &adc_config);
   // this means that one cycle is completed
-  if( adc_data_idx == ADC_IDX_0 )
+  if( adc_data_idx == SLIDER_ADC_IDX_0 )
   {
     // one cycle is complete and next triggering will be done from the main loop
     adc_busy = TRUE;
@@ -495,10 +556,11 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
   }
 }
 
-uint8_t Slider_GetCounts( uint8_t slider_type )
+uint8_t Display_GetSliderCounts( uint8_t slider_type )
 {
   uint8_t slider_value = 0u;
-  if( slider_type < ADC_IDX_MAX )
+  // Here Slider ADC IDX Max is used purposely, bcz next index is of temp sensor
+  if( slider_type < SLIDER_ADC_IDX_MAX )
   {
     __disable_irq();
     // Make Sure that Slider type index must match with the ADC Channel/Data Index
@@ -506,6 +568,11 @@ uint8_t Slider_GetCounts( uint8_t slider_type )
     __enable_irq();
   }
   return slider_value;
+}
+
+uint8_t * Display_GetTempData( void )
+{
+  return temp_sensor_1sec;
 }
 /* USER CODE END 4 */
 

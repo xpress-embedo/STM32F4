@@ -9,16 +9,17 @@
 #include "tft.h"
 #include "lvgl/lvgl.h"
 
-//#include <stdio.h>
-//uint32_t dbg_size = 0u;
-//char dbg_buff[100] = { 0 };
-//extern UART_HandleTypeDef huart2;
+uint32_t dbg2_size = 0u;
+char dbg_buff[50] = { 0 };
+extern UART_HandleTypeDef huart2;
 
 typedef enum _Display_State_e
 {
   DISP_STATE_VIBGYOR = 0,
   DISP_STATE_VIBGYOR_WAIT,
   DISP_STATE_RGB_MIXER,
+  DISP_STATE_TEMP_SENSOR,
+  DISP_STATE_TEMP_SENSOR_REFRESH,
   DISP_STATE_END,
 } Display_State_e;
 
@@ -35,19 +36,26 @@ typedef struct _RGB_Mixer_s
   lv_obj_t*     label;
 } RGB_Mixer_s;
 
-
-static Display_State_e disp_state = DISP_STATE_RGB_MIXER; //DISP_STATE_VIBGYOR;
+// Private Variables
+static Display_State_e disp_state = DISP_STATE_TEMP_SENSOR; // DISP_STATE_RGB_MIXER; //DISP_STATE_VIBGYOR;
 static RGB_Mixer_s red, green, blue;
 static lv_obj_t *slider_r;
 static lv_obj_t *slider_g;
 static lv_obj_t *slider_b;
 static lv_obj_t *rectangle;
 static uint8_t prev_red_value, prev_green_value, prev_blue_value;
+// for temperature chart
+static lv_obj_t * chart;
+static lv_chart_series_t * temp_series;
 
+// Private Function Prototypes
 static void Display_Vibgyor( void );
 static void Display_RGBMixer( void );
+static void Display_TemperatureChart( void );
+static void Display_TemperatureChartRefresh( void );
 static void Slider_DummyCallback( RGB_Mixer_s *user_data, int32_t slider_value );
 
+// Public Function Definitions
 // Display manager state machine
 void Display_Mng( void )
 {
@@ -73,9 +81,9 @@ void Display_Mng( void )
       disp_state = DISP_STATE_END;
       break;
     case DISP_STATE_END:
-      cur_red_value = Slider_GetCounts( (uint8_t)SLIDER_TYPE_RED );
-      cur_green_value = Slider_GetCounts( (uint8_t)SLIDER_TYPE_GREEN );
-      cur_blue_value = Slider_GetCounts( (uint8_t)SLIDER_TYPE_BLUE );
+      cur_red_value = Display_GetSliderCounts( (uint8_t)SLIDER_TYPE_RED );
+      cur_green_value = Display_GetSliderCounts( (uint8_t)SLIDER_TYPE_GREEN );
+      cur_blue_value = Display_GetSliderCounts( (uint8_t)SLIDER_TYPE_BLUE );
       // Update for RED Slider
       if( cur_red_value != prev_red_value )
       {
@@ -93,6 +101,26 @@ void Display_Mng( void )
       {
         prev_blue_value = cur_blue_value;
         Slider_DummyCallback( &blue, cur_blue_value );
+      }
+      break;
+    case DISP_STATE_TEMP_SENSOR:
+      // memset( dbg_buff, 0x00, 50u );
+      // dbg2_size = snprintf(dbg_buff, 50u, "Temperature Sensor = %ld\r\n", HAL_GetTick() );
+      // HAL_UART_Transmit(&huart2, (uint8_t*)dbg_buff, dbg2_size, 1000u);
+      Display_TemperatureChart();
+      disp_state = DISP_STATE_TEMP_SENSOR_REFRESH;
+      wait_time = HAL_GetTick();
+      break;
+    case DISP_STATE_TEMP_SENSOR_REFRESH:
+      // Update chart only after 1 minute (as they are slow)
+      if( HAL_GetTick()-wait_time > 60000u )
+      {
+        wait_time = HAL_GetTick();
+        // Note: Charts are time consuming
+        Display_TemperatureChartRefresh();
+        // memset( dbg_buff, 0x00, 50u );
+        // dbg2_size = snprintf(dbg_buff, 50u, "Refresh Time = %ld\r\n", HAL_GetTick() - wait_time );
+        // HAL_UART_Transmit(&huart2, (uint8_t*)dbg_buff, dbg2_size, 1000u);
       }
       break;
     default:
@@ -293,7 +321,65 @@ static void Slider_DummyCallback( RGB_Mixer_s *user_data, int32_t slider_value )
   lv_obj_set_style_bg_color( rectangle, lv_color_make( red_value, green_value, blue_value), LV_PART_MAIN);
   // the function `lv_color_make` can form colors if red, green and blue color
   // are specified
-//  memset( dbg_buff, 0x00, 100u );
-//  dbg_size = snprintf(dbg_buff, 100u, "red=%ld, blue=%ld, green=%ld\r\n", red_value, blue_value, green_value );
-//  HAL_UART_Transmit(&huart2, (uint8_t*)dbg_buff, dbg_size, 1000u);
+}
+
+static void Display_TemperatureChart( void )
+{
+  uint16_t idx = 0u;
+  uint8_t *data = Display_GetTempData();
+  // Create a chart object
+  chart = lv_chart_create( lv_scr_act() );
+
+  // Create a label for Title text
+  lv_obj_t * lbl_title = lv_label_create( lv_scr_act() );
+  lv_label_set_text( lbl_title, "Temperature Graph");
+  lv_obj_set_style_text_align( lbl_title, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_align(label1, LV_ALIGN_CENTER, 0, -40);
+
+  // Set the chart size (Size should be set properly because we wanted to display
+  // chart title and some data on y-axis also)
+  // display is 320x240
+  lv_obj_set_size( chart, TFT_GetWidth()-60u, TFT_GetHeight()-40 );
+  // TODO: XS I don't want to center it, will check later
+  // lv_obj_center( chart );
+  lv_obj_align( chart, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+
+  // Set Chart Type to Line Chart
+  lv_chart_set_type( chart, LV_CHART_TYPE_LINE );
+  // By Default the number of points are 10, update it to chart width
+  lv_chart_set_point_count( chart, TFT_GetWidth()-60u );
+  // Update mode shift or circular, here shift is selected
+  lv_chart_set_update_mode( chart, LV_CHART_UPDATE_MODE_SHIFT );
+  // Specify Vertical Range
+  lv_chart_set_range( chart, LV_CHART_AXIS_PRIMARY_Y, 10, 60);
+  // Tick Marks and Labels
+  // 2nd argument is axis, 3rd argument is major tick length, 4th is minor tick length
+  // 5th is number of major ticks on the axis
+  // 6th is number of minor ticks between two major ticks
+  // 7th is enable label drawing on major ticks
+  // 8th is extra size required to draw labels and ticks
+  lv_chart_set_axis_tick(chart, LV_CHART_AXIS_PRIMARY_Y, 10, 5, 10, 2, true, 50);
+  
+  // Add Data Series
+  temp_series = lv_chart_add_series(chart, lv_palette_main(LV_PALETTE_GREEN), LV_CHART_AXIS_PRIMARY_Y);
+
+  for( idx=0; idx<(TFT_GetWidth()-60u); idx++ )
+  {
+    temp_series->y_points[idx] = (lv_coord_t)*(data+idx);
+  }
+
+  lv_chart_refresh(chart); /*Required after direct set*/
+}
+
+static void Display_TemperatureChartRefresh( void )
+{
+  uint16_t idx = 0u;
+  uint8_t *data = Display_GetTempData();
+
+  for( idx=0; idx<(TFT_GetWidth()-60u); idx++ )
+  {
+    temp_series->y_points[idx] = (lv_coord_t)*(data+idx);
+  }
+
+  lv_chart_refresh(chart); /*Required after direct set*/
 }

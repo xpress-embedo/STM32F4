@@ -94,15 +94,22 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     __HAL_RCC_ADC1_CLK_ENABLE();
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
     /**ADC1 GPIO Configuration
     PA0-WKUP     ------> ADC1_IN0
     PA1     ------> ADC1_IN1
     PA7     ------> ADC1_IN7
+    PB0     ------> ADC1_IN8
     */
     GPIO_InitStruct.Pin = RED_SLIDER_Pin|GREEN_SLIDER_Pin|BLUE_SLIDER_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = TEMP_SENS_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(TEMP_SENS_GPIO_Port, &GPIO_InitStruct);
 
     /* ADC1 interrupt Init */
     HAL_NVIC_SetPriority(ADC_IRQn, 0, 0);
@@ -134,8 +141,11 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     PA0-WKUP     ------> ADC1_IN0
     PA1     ------> ADC1_IN1
     PA7     ------> ADC1_IN7
+    PB0     ------> ADC1_IN8
     */
     HAL_GPIO_DeInit(GPIOA, RED_SLIDER_Pin|GREEN_SLIDER_Pin|BLUE_SLIDER_Pin);
+
+    HAL_GPIO_DeInit(TEMP_SENS_GPIO_Port, TEMP_SENS_Pin);
 
     /* ADC1 interrupt DeInit */
     HAL_NVIC_DisableIRQ(ADC_IRQn);
