@@ -35,14 +35,21 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+// #define BUFFER_SIZE         ((uint32_t)0x0100)
+#define BUFFER_SIZE         ((uint32_t)10)
+#define WRITE_READ_ADDR     ((uint32_t)0x0800)
+#define REFRESH_COUNT       ((uint32_t)0x056A)   /* SDRAM refresh counter (90MHz SDRAM clock) */
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 SDRAM_HandleTypeDef hsdram1;
 
 /* USER CODE BEGIN PV */
+FMC_SDRAM_CommandTypeDef command;
 
+// Read and Write Buffers
+uint32_t aTxBuffer[BUFFER_SIZE];
+uint32_t aRxBuffer[BUFFER_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -50,7 +57,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_FMC_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram, FMC_SDRAM_CommandTypeDef *Command);
+static void Fill_Buffer(uint32_t *pBuffer, uint32_t uwBufferLenght, uint32_t uwOffset);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -65,7 +73,7 @@ static void MX_FMC_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  uint32_t idx = 0u;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -88,6 +96,24 @@ int main(void)
   MX_GPIO_Init();
   MX_FMC_Init();
   /* USER CODE BEGIN 2 */
+  // Program the SDRAM external device
+  SDRAM_Initialization_Sequence(&hsdram1, &command);
+
+  // SDRAM Memory Read/Write Access
+  // Fill the buffer to write in aTxBuffer
+  Fill_Buffer(aTxBuffer, BUFFER_SIZE, 0xA244250F );
+
+  // Write the data to SDRAM memory
+  for( idx=0u; idx<BUFFER_SIZE; idx++ )
+  {
+    *(__IO uint32_t*)(SDRAM_BANK_ADDR + WRITE_READ_ADDR + 4*idx) = aTxBuffer[idx];
+  }
+
+  // Read back data from the SDRAM memory
+  for( idx=0; idx<BUFFER_SIZE; idx++ )
+  {
+    aRxBuffer[idx] = *(__IO uint32_t*)(SDRAM_BANK_ADDR + WRITE_READ_ADDR + 4*idx);
+  }
 
   /* USER CODE END 2 */
 
@@ -114,21 +140,27 @@ void SystemClock_Config(void)
   /** Configure the main internal regulator output voltage
   */
   __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 50;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 4;
+  RCC_OscInitStruct.PLL.PLLN = 180;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 7;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Activate the Over-Drive mode
+  */
+  if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
     Error_Handler();
   }
@@ -139,10 +171,10 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV8;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
   {
     Error_Handler();
   }
@@ -393,7 +425,83 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+/**
+  * @brief  Perform the SDRAM exernal memory inialization sequence
+  * @param  hsdram: SDRAM handle
+  * @param  Command: Pointer to SDRAM command structure
+  * @retval None
+  */
+static void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram, FMC_SDRAM_CommandTypeDef *Command)
+{
+  __IO uint32_t tmpmrd =0;
+  /* Step 3:  Configure a clock configuration enable command */
+  Command->CommandMode       = FMC_SDRAM_CMD_CLK_ENABLE;
+  Command->CommandTarget     = FMC_SDRAM_CMD_TARGET_BANK2;
+  Command->AutoRefreshNumber   = 1;
+  Command->ModeRegisterDefinition = 0;
 
+  /* Send the command */
+  HAL_SDRAM_SendCommand(hsdram, Command, 0x1000);
+
+  /* Step 4: Insert 100 ms delay */
+  HAL_Delay(100);
+
+  /* Step 5: Configure a PALL (precharge all) command */
+  Command->CommandMode       = FMC_SDRAM_CMD_PALL;
+  Command->CommandTarget       = FMC_SDRAM_CMD_TARGET_BANK2;
+  Command->AutoRefreshNumber   = 1;
+  Command->ModeRegisterDefinition = 0;
+
+  /* Send the command */
+  HAL_SDRAM_SendCommand(hsdram, Command, 0x1000);
+
+  /* Step 6 : Configure a Auto-Refresh command */
+  Command->CommandMode       = FMC_SDRAM_CMD_AUTOREFRESH_MODE;
+  Command->CommandTarget     = FMC_SDRAM_CMD_TARGET_BANK2;
+  Command->AutoRefreshNumber   = 4;
+  Command->ModeRegisterDefinition = 0;
+
+  /* Send the command */
+  HAL_SDRAM_SendCommand(hsdram, Command, 0x1000);
+
+  /* Step 7: Program the external memory mode register */
+  tmpmrd = (uint32_t)SDRAM_MODEREG_BURST_LENGTH_2          |
+                     SDRAM_MODEREG_BURST_TYPE_SEQUENTIAL   |
+                     SDRAM_MODEREG_CAS_LATENCY_3           |
+                     SDRAM_MODEREG_OPERATING_MODE_STANDARD |
+                     SDRAM_MODEREG_WRITEBURST_MODE_SINGLE;
+
+  Command->CommandMode = FMC_SDRAM_CMD_LOAD_MODE;
+  Command->CommandTarget     = FMC_SDRAM_CMD_TARGET_BANK2;
+  Command->AutoRefreshNumber   = 1;
+  Command->ModeRegisterDefinition = tmpmrd;
+
+  /* Send the command */
+  HAL_SDRAM_SendCommand(hsdram, Command, 0x1000);
+
+  /* Step 8: Set the refresh rate counter */
+  /* (15.62 us x Freq) - 20 */
+  /* Set the device refresh counter */
+  HAL_SDRAM_ProgramRefreshRate(hsdram, REFRESH_COUNT);
+}
+
+/**
+  * @brief  Fills buffer with user predefined data.
+  * @param  pBuffer: pointer on the buffer to fill
+  * @param  uwBufferLenght: size of the buffer to fill
+  * @param  uwOffset: first value to fill on the buffer
+  * @retval None
+  */
+static void Fill_Buffer(uint32_t *pBuffer, uint32_t uwBufferLenght, uint32_t uwOffset)
+{
+  uint32_t tmpIndex = 0;
+
+  /* Put in global buffer different values */
+  for (tmpIndex = 0; tmpIndex < uwBufferLenght; tmpIndex++ )
+  {
+    pBuffer[tmpIndex] = tmpIndex + uwOffset;
+  }
+}
 /* USER CODE END 4 */
 
 /**
