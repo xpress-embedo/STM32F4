@@ -115,6 +115,13 @@ int main(void)
     aRxBuffer[idx] = *(__IO uint32_t*)(SDRAM_BANK_ADDR + WRITE_READ_ADDR + 4*idx);
   }
 
+//  // Another method
+//  Fill_Buffer(aTxBuffer, BUFFER_SIZE, 0x01);
+//  // Copying data to SDRAM
+//  memcpy( (uint32_t*)SDRAM_BANK_ADDR, aTxBuffer, BUFFER_SIZE );
+//  // Reading data from SDRAM
+//  memcpy( aRxBuffer, (uint32_t*)SDRAM_BANK_ADDR, BUFFER_SIZE );
+
   /* USER CODE END 2 */
 
   /* Infinite loop */

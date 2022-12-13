@@ -31,7 +31,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -243,6 +243,7 @@ void Error_Handler(void);
 #define NBL1_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
+// Since SDRAM Bank2 is used it's address is 0xD0000000 for Bank1 the address is 0xC0000000
 #define SDRAM_BANK_ADDR                             ((uint32_t)0xD0000000)
 
 /* #define SDRAM_MEMORY_WIDTH                       FMC_SDRAM_MEM_BUS_WIDTH_8 */
