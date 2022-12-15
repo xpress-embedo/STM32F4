@@ -50,8 +50,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
-static void HAL_SPI_ChangeTo16Bit( SPI_HandleTypeDef *hspi );
-static void HAL_SPI_ChangeTo8Bit( SPI_HandleTypeDef *hspi );
+static void HAL_SPI_ChangeDataSizeTo16Bit( SPI_HandleTypeDef *hspi );
+static void HAL_SPI_ChangeDataSizeTo8Bit( SPI_HandleTypeDef *hspi );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -89,14 +89,17 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_RESET);
-  // 8-bit mode
-  // uint8_t data[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10};
-  // HAL_SPI_Transmit(&hspi2, data, 10u, 1000u);
   // 16-bit mode
-  HAL_SPI_ChangeTo16Bit(&hspi2);
-  uint16_t data[] = {0x0102, 0x0304, 0x0506, 0x0708, 0x0910};
-  HAL_SPI_Transmit(&hspi2, (uint8_t*)data, 5u, 1000u);
+  HAL_SPI_ChangeDataSizeTo16Bit(&hspi2);
+  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_RESET);
+  uint16_t data1[] = {0x0102, 0x0304, 0x0506, 0x0708, 0x0910};
+  HAL_SPI_Transmit(&hspi2, (uint8_t*)data1, 5u, 1000u);
+  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
+  // 8-bit mode
+  HAL_SPI_ChangeDataSizeTo8Bit(&hspi2);
+  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_RESET);
+  uint8_t data2[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10};
+  HAL_SPI_Transmit(&hspi2, data2, 10u, 1000u);
   HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
@@ -218,35 +221,35 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-static void HAL_SPI_ChangeTo16Bit( SPI_HandleTypeDef *hspi )
+static void HAL_SPI_ChangeDataSizeTo16Bit( SPI_HandleTypeDef *hspi )
 {
   // If in 8-bit mode, then only change to 16-bit
   if( hspi->Init.DataSize == SPI_DATASIZE_8BIT )
   {
     // first disable SPI after checking the busy flag
     while( READ_BIT(hspi->Instance->SR, SPI_SR_BSY_Msk) );
-    CLEAR_BIT(hspi->Instance->CR1, SPI_CR1_SPE_Pos );
+    CLEAR_BIT(hspi->Instance->CR1, SPI_CR1_SPE_Msk );
     // set the data frame register for 16-bit mode
     hspi->Init.DataSize = SPI_DATASIZE_16BIT;
-    SET_BIT(hspi->Instance->CR1, SPI_CR1_DFF_Pos );
+    SET_BIT(hspi->Instance->CR1, SPI_CR1_DFF_Msk );
     // enable SPI again
-    SET_BIT(hspi->Instance->CR1, SPI_CR1_SPE_Pos );
+    SET_BIT(hspi->Instance->CR1, SPI_CR1_SPE_Msk );
   }
 }
 
-static void HAL_SPI_ChangeTo8Bit( SPI_HandleTypeDef *hspi )
+static void HAL_SPI_ChangeDataSizeTo8Bit( SPI_HandleTypeDef *hspi )
 {
   // If in 16-bit mode, then only change to 8-bit
   if( hspi->Init.DataSize == SPI_DATASIZE_16BIT )
   {
     // first disable SPI after checking the busy flag
     while( READ_BIT(hspi->Instance->SR, SPI_SR_BSY_Msk) );
-    CLEAR_BIT(hspi->Instance->CR1, SPI_CR1_SPE_Pos );
+    CLEAR_BIT(hspi->Instance->CR1, SPI_CR1_SPE_Msk );
     // clear data frame register for 8-bit mode
     hspi->Init.DataSize = SPI_DATASIZE_8BIT;
-    CLEAR_BIT(hspi->Instance->CR1, SPI_CR1_DFF_Pos );
+    CLEAR_BIT(hspi->Instance->CR1, SPI_CR1_DFF_Msk );
     // enable SPI again
-    SET_BIT(hspi->Instance->CR1, SPI_CR1_SPE_Pos );
+    SET_BIT(hspi->Instance->CR1, SPI_CR1_SPE_Msk );
   }
 }
 /* USER CODE END 4 */
