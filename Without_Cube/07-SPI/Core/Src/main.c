@@ -90,11 +90,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_RESET);
   // 8-bit mode
-  // uint8_t data[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10};
-  // HAL_SPI_Transmit(&hspi2, data, 10u, 1000u);
+  uint8_t data[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10};
+  HAL_SPI_Transmit(&hspi2, data, 10u, 1000u);
   // 16-bit mode
-  uint16_t data[] = {0x0102, 0x0304, 0x0506, 0x0708, 0x0910};
-  HAL_SPI_Transmit(&hspi2, (uint8_t*)data, 5u, 1000u);
+  // uint16_t data[] = {0x0102, 0x0304, 0x0506, 0x0708, 0x0910};
+  // HAL_SPI_Transmit(&hspi2, (uint8_t*)data, 5u, 1000u);
   HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
@@ -169,7 +169,7 @@ static void MX_SPI2_Init(void)
   hspi2.Instance = SPI2;
   hspi2.Init.Mode = SPI_MODE_MASTER;
   hspi2.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi2.Init.DataSize = SPI_DATASIZE_16BIT;
+  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
