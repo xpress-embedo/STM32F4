@@ -2,6 +2,9 @@
 #include <stdint.h>
 #include "ili9341.h"
 #include "lvgl/lvgl.h"
+#if (SPI_DATA_TRANSFER_BITS == SPI_DATA_TRANSFER_16BIT)
+#include "main.h"     // included to use 8-bit 16-bit data size change SPI functions
+#endif
 
 // Contains the callback functions to interact with the display and manipulate
 // low level drawing behavior
@@ -76,10 +79,6 @@ static void TFT_FlushSlow(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_
 //Flush Function
 static void TFT_Flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
 {
-  #define SPI_DATA_TRANSFER_8BIT        (0u)
-  #define SPI_DATA_TRANSFER_16BIT       (1u)
-  // #define SPI_DATA_TRANSFER_BITS        SPI_DATA_TRANSFER_8BIT
-  #define SPI_DATA_TRANSFER_BITS        SPI_DATA_TRANSFER_16BIT
   uint16_t len = 0u;
   lv_coord_t width = 0;
 
@@ -118,7 +117,7 @@ static void TFT_Flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * 
     #if (SPI_DATA_TRANSFER_BITS == SPI_DATA_TRANSFER_8BIT)
     ILI9341_SendData((uint8_t*)color_p, len);
     #elif (SPI_DATA_TRANSFER_BITS == SPI_DATA_TRANSFER_16BIT)
-    ILI9341_Send_16BitData( (uint16_t*)color_p, len );
+    ILI9341_Send_16BitDataSW( (uint16_t*)color_p, len );
     #endif
     color_p += width;
   }

@@ -121,7 +121,9 @@ void ILI9341_SendData( uint8_t *data, uint32_t length )
   CS_HIGH();
 }
 
-void ILI9341_Send_16BitData( uint16_t *data, uint16_t length )
+// NOTE: while using this function please make sure that SPI Data Size is 8-bits
+// And this function manages internally to transmit data over SPI bus
+void ILI9341_Send_16BitDataSW( uint16_t *data, uint16_t length )
 {
   uint16_t idx = 0u;
   uint8_t value[2] = { 0 };
@@ -134,10 +136,6 @@ void ILI9341_Send_16BitData( uint16_t *data, uint16_t length )
     HAL_SPI_Transmit( &hspi2, value, 2u, 10u );
   }
   CS_HIGH();
-  // Earlier the plan was to use the 16-bit mode of STM32 SPI
-  // but facing some problem, will work on that little later
-  // HAL_SPI_DeInit( &hspi2 );
-  // MX_SPI2_Init();
 }
 
 // Set the display area
@@ -231,7 +229,7 @@ void ILI9341_Fill( uint16_t color )
   while( total_pixel_counts )
   {
     ILI9341_SendData( data, 2u );
-    // ILI9341_Send_16BitData(&color, 1u);
+    // ILI9341_Send_16BitDataSW(&color, 1u);
     total_pixel_counts--;
   }
 }

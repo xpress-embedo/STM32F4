@@ -84,6 +84,8 @@ void Error_Handler(void);
 #define CS_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
+void HAL_SPI_ChangeDataSizeTo16Bit( SPI_HandleTypeDef *hspi );
+void HAL_SPI_ChangeDataSizeTo8Bit( SPI_HandleTypeDef *hspi );
 uint8_t Display_GetSliderCounts( uint8_t slider_type );
 uint8_t * Display_GetTempData( void );
 
