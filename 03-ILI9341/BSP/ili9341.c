@@ -59,6 +59,16 @@ static uint16_t lcd_height = ILI9341_LCD_HEIGHT;
 /*-----------------------------Private Functions------------------------------*/
 static void ILI9341_Reset( void );
 
+void ILI9341_16BitDataModeEnable( void )
+{
+  HAL_SPI_ChangeDataSizeTo16Bit( &hspi2 );
+}
+
+void ILI9341_16BitDataModeDisable( void )
+{
+  HAL_SPI_ChangeDataSizeTo8Bit( &hspi2 );
+}
+
 void ILI9341_Init( void )
 {
   uint8_t *addr = ILI9341_InitCommands;
@@ -135,6 +145,17 @@ void ILI9341_Send_16BitDataSW( uint16_t *data, uint16_t length )
     value[1] = data[idx] & 0xFF;
     HAL_SPI_Transmit( &hspi2, value, 2u, 10u );
   }
+  CS_HIGH();
+}
+
+// NOTE: while using this function please make sure that SPI Data Size is 16-bits
+// this can be done by using the function HAL_SPI_ChangeDataSizeTo16Bit
+// and reverted back to 8-bit mode using HAL_SPI_ChangeDataSizeTo8Bit
+void ILI9341_Send_16BitDataHW( uint16_t *data, uint16_t length )
+{
+  CS_LOW();
+  DC_HIGH();
+  HAL_SPI_Transmit( &hspi2, (uint8_t*)data, length, 10000u );
   CS_HIGH();
 }
 

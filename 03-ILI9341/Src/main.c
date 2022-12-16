@@ -143,6 +143,13 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   HAL_Delay(10);
+//  uint16_t data_temp[4] = {0x0123, 0x4567, 0x89AB, 0xCDEF};
+//  ILI9341_Send_16BitDataSW(data_temp, 4u);
+//
+//  ILI9341_16BitDataModeEnable();
+//  ILI9341_Send_16BitDataHW(data_temp, 4u);
+//  ILI9341_16BitDataModeDisable();
+//  while(1);
   lv_init();
   TFT_Init();
   // HAL_Delay(10);

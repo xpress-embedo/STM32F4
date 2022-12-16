@@ -2,9 +2,6 @@
 #include <stdint.h>
 #include "ili9341.h"
 #include "lvgl/lvgl.h"
-#if (SPI_DATA_TRANSFER_BITS == SPI_DATA_TRANSFER_16BIT)
-#include "main.h"     // included to use 8-bit 16-bit data size change SPI functions
-#endif
 
 // Contains the callback functions to interact with the display and manipulate
 // low level drawing behavior
@@ -22,14 +19,14 @@ void TFT_Init( void )
   // These are simple arrays used by LVGL to render the screen content.
   // Once the rendering is ready the content of the draw buffer is sent to the display
   // using the flush_cb callback function, which is set in display driver
-  static lv_color_t disp_buf1[TFT_HOR_RES*10];
-  static lv_color_t disp_buf2[TFT_HOR_RES*10];
+  static lv_color_t disp_buf1[TFT_HOR_RES*5];
+  static lv_color_t disp_buf2[TFT_HOR_RES*5];
 
   // Contains the Internal Graphic Buffer(s) called draw buffers
   static lv_disp_draw_buf_t buf;
 
   // Initialize the display buffer with the buffers
-  lv_disp_draw_buf_init( &buf, disp_buf1, disp_buf2, TFT_HOR_RES*10u );
+  lv_disp_draw_buf_init( &buf, disp_buf1, disp_buf2, TFT_HOR_RES*5u );
 
   lv_disp_drv_init( &disp_drv );
 
@@ -79,6 +76,11 @@ static void TFT_FlushSlow(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_
 //Flush Function
 static void TFT_Flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
 {
+  #define SPI_DATA_TRANSFER_8BIT        (0u)
+  #define SPI_DATA_TRANSFER_16BIT       (1u)
+
+  // #define SPI_DATA_TRANSFER_BITS        SPI_DATA_TRANSFER_8BIT
+  #define SPI_DATA_TRANSFER_BITS        SPI_DATA_TRANSFER_16BIT
   uint16_t len = 0u;
   lv_coord_t width = 0;
 
@@ -112,15 +114,23 @@ static void TFT_Flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * 
 
   ILI9341_SendCommand(ILI9341_GRAM, 0u, 0u );
 
+  #if (SPI_DATA_TRANSFER_BITS == SPI_DATA_TRANSFER_16BIT)
+  ILI9341_16BitDataModeEnable();   // Not Working
+  #endif
+
   for( uint32_t y = act_y1; y <= act_y2; y++)
   {
     #if (SPI_DATA_TRANSFER_BITS == SPI_DATA_TRANSFER_8BIT)
     ILI9341_SendData((uint8_t*)color_p, len);
     #elif (SPI_DATA_TRANSFER_BITS == SPI_DATA_TRANSFER_16BIT)
-    ILI9341_Send_16BitDataSW( (uint16_t*)color_p, len );
+    // ILI9341_Send_16BitDataSW( (uint16_t*)color_p, len );
+    ILI9341_Send_16BitDataHW( (uint16_t*)color_p, len );    // Not Working
     #endif
     color_p += width;
   }
+  #if (SPI_DATA_TRANSFER_BITS == SPI_DATA_TRANSFER_16BIT)
+  ILI9341_16BitDataModeDisable();  // Not Working
+  #endif
 
   lv_disp_flush_ready(&disp_drv);
 }

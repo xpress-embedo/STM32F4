@@ -37,7 +37,7 @@ typedef struct _RGB_Mixer_s
 } RGB_Mixer_s;
 
 // Private Variables
-static Display_State_e disp_state = DISP_STATE_TEMP_SENSOR; // DISP_STATE_RGB_MIXER; //DISP_STATE_VIBGYOR;
+static Display_State_e disp_state = DISP_STATE_VIBGYOR; //DISP_STATE_TEMP_SENSOR; // DISP_STATE_RGB_MIXER; //DISP_STATE_VIBGYOR;
 static RGB_Mixer_s red, green, blue;
 static lv_obj_t *slider_r;
 static lv_obj_t *slider_g;
@@ -73,7 +73,7 @@ void Display_Mng( void )
       // wait here for some time and then move to next state
       if( HAL_GetTick()-wait_time > 1000u )
       {
-        disp_state = DISP_STATE_RGB_MIXER;
+        // disp_state = DISP_STATE_RGB_MIXER;
       }
       break;
     case DISP_STATE_RGB_MIXER:
@@ -334,7 +334,7 @@ static void Display_TemperatureChart( void )
   lv_obj_t * lbl_title = lv_label_create( lv_scr_act() );
   lv_label_set_text( lbl_title, "Temperature Graph");
   lv_obj_set_style_text_align( lbl_title, LV_TEXT_ALIGN_CENTER, 0);
-  lv_obj_align(label1, LV_ALIGN_CENTER, 0, -40);
+  // lv_obj_align(label1, LV_ALIGN_CENTER, 0, -40);
 
   // Set the chart size (Size should be set properly because we wanted to display
   // chart title and some data on y-axis also)

@@ -137,6 +137,8 @@ void ILI9341_SendCommand( uint8_t command, uint8_t *data, uint32_t length );
 void ILI9341_SendData( uint8_t *data, uint32_t length );
 void ILI9341_Send_16BitDataSW( uint16_t *data, uint16_t length );
 void ILI9341_Send_16BitDataHW( uint16_t *data, uint16_t length );
+void ILI9341_16BitDataModeEnable( void );
+void ILI9341_16BitDataModeDisable( void );
 
 void ILI9341_SetWindow( uint16_t x_start, uint16_t y_start, uint16_t x_end, uint16_t y_end );
 void ILI9341_DrawPixel( uint16_t x, uint16_t y, uint16_t color );
