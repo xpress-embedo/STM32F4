@@ -27,6 +27,7 @@
 #include "lvgl/lvgl.h"
 
 #include "lvgl/examples/lv_examples.h"
+#include "ui.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -106,7 +107,8 @@ int main(void)
   // rotate the display
   lv_disp_set_rotation( lv_disp_get_default(), LV_DISP_ROT_270 );
 
-  lv_example_label_1();
+  // lv_example_label_1();
+  ui_init();
 
   led_3_state = FALSE;
   led_4_state = FALSE;
