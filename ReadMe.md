@@ -63,6 +63,19 @@ The idea is simple, and is summarized in the following steps.
     export PATH="/opt/GCC-ARM/gcc-arm-none-eabi-10.3-2021.10/bin/:$PATH"
     ```
    *I have faced a problem with this step, whenever I am closing my terminal session the path added recently is gone, I will investigate on this topic later.*  
+   **The problem is solved now, we have to update the `.bashrc` file, this is the first script file which is executed when the user logs in. Use the below mentioned command to update the environment variables.**
+   ```bat
+   # Open the file in a text editor
+   gedit ~/.bashrc
+   ```
+   And then add the following lines (of-course depends on the version we have download), at the bottom of the file.  
+   ```bash
+   # Added by me
+   PATH=$PATH:/opt/GCC-ARM/gcc-arm-none-eabi-10.3-2021.10/bin
+   export PATH
+   ```
+   After this, we can access the `arm-none-eabi-gcc` and other respective files from the command line.  
+
 5. Since we have already exported the `STM32CubeMx` project as `Makefile` project, we can use the `make` command to see if the project is building or not.
 6. Similary the same `CMakeLists.txt` can be used to compile in `Ubuntu`, with a slight difference, instead of using `MinGW Makefiles` we have to use `Unix Makefiles`, as shown below.
    ```bash
