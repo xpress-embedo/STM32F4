@@ -59,6 +59,9 @@ if( GNU_IAR_COMPILER_SELECT )
                           -ffunction-sections
                           -Wall
                           $<$<CONFIG:Debug>:-Og>
+                          # (Options for debugging your program) https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html
+                          # without this option, I was not able to Debug using Segger Ozone
+                          -ggdb
                           )
 
   target_link_options( ${EXECUTABLE} PRIVATE
