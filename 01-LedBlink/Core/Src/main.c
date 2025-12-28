@@ -45,16 +45,16 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint8_t led_1_state = FALSE;
-uint8_t led_2_state = FALSE;
-uint32_t led_1_timestamp = 0u;
-uint32_t led_2_timestamp = 0u;
-uint32_t user_btn_timestamp = 0u;
-uint32_t usart2_tx_timestamp = 0u;
+static uint8_t led_1_state = FALSE;
+static uint8_t led_2_state = FALSE;
+static uint32_t led_1_timestamp = 0u;
+static uint32_t led_2_timestamp = 0u;
+static uint32_t user_btn_timestamp = 0u;
+static uint32_t usart2_tx_timestamp = 0u;
 
-const uint8_t msg1[] = "Getting Started with STM32\r\n";
-const uint8_t msg2[] = "Hi, Transmitting from STM32F4\r\n";
-uint8_t rx_data = 0u;
+static const uint8_t msg1[] = "Getting Started with STM32\r\n";
+static const uint8_t msg2[] = "Hi, Transmitting from STM32F4\r\n";
+static uint8_t rx_data = 0u;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
